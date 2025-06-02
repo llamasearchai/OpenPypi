@@ -1,0 +1,2 @@
+[console_scripts]
+openpypi = openpypi.cli:main

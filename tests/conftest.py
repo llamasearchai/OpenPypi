@@ -1,13 +1,14 @@
 """Pytest configuration and fixtures."""
 
-import pytest
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 # Add src directory to Python path
-src_dir = Path(__file__).parent.parent / 'src'
+src_dir = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_dir))
 
 from openpypi.core import Config, ProjectGenerator
@@ -25,7 +26,7 @@ def sample_config() -> Config:
         use_fastapi=True,
         use_openai=True,
         use_docker=True,
-        create_tests=True
+        create_tests=True,
     )
 
 
@@ -41,7 +42,7 @@ def minimal_config() -> Config:
         use_fastapi=False,
         use_openai=False,
         use_docker=False,
-        create_tests=False
+        create_tests=False,
     )
 
 
@@ -62,13 +63,13 @@ def project_generator(sample_config: Config) -> ProjectGenerator:
 def sample_metadata() -> Dict[str, Any]:
     """Provide sample project metadata."""
     return {
-        'author': 'Test Author',
-        'email': 'test@example.com',
-        'description': 'A test package',
-        'license': 'MIT',
-        'python_requires': '>=3.8',
-        'dependencies': ['fastapi>=0.104.0', 'openai>=1.0.0'],
-        'python_versions': ['3.8', '3.9', '3.10', '3.11', '3.12']
+        "author": "Test Author",
+        "email": "test@example.com",
+        "description": "A test package",
+        "license": "MIT",
+        "python_requires": ">=3.8",
+        "dependencies": ["fastapi>=0.104.0", "openai>=1.0.0"],
+        "python_versions": ["3.8", "3.9", "3.10", "3.11", "3.12"],
     }
 
 
@@ -76,7 +77,7 @@ def sample_metadata() -> Dict[str, Any]:
 def mock_subprocess(monkeypatch):
     """Mock subprocess calls."""
     import subprocess
-    
+
     def mock_run(*args, **kwargs):
         # Mock successful subprocess calls
         class MockResult:
@@ -84,22 +85,22 @@ def mock_subprocess(monkeypatch):
                 self.returncode = 0
                 self.stdout = ""
                 self.stderr = ""
-        
+
         return MockResult()
-    
+
     monkeypatch.setattr(subprocess, "run", mock_run)
 
 
 class MockResponse:
     """Mock HTTP response for testing."""
-    
+
     def __init__(self, json_data: Dict[str, Any], status_code: int = 200):
         self.json_data = json_data
         self.status_code = status_code
-    
+
     def json(self):
         return self.json_data
-    
+
     def raise_for_status(self):
         if self.status_code >= 400:
             raise Exception(f"HTTP {self.status_code}")
@@ -108,24 +109,14 @@ class MockResponse:
 @pytest.fixture
 def mock_response():
     """Provide mock HTTP response."""
-    return MockResponse({'result': 'success'})
+    return MockResponse({"result": "success"})
 
 
 @pytest.fixture
 def mock_openai_response():
     """Provide mock OpenAI API response."""
     return {
-        'choices': [
-            {
-                'message': {
-                    'content': 'This is a test response from OpenAI'
-                }
-            }
-        ],
-        'model': 'gpt-3.5-turbo',
-        'usage': {
-            'prompt_tokens': 10,
-            'completion_tokens': 20,
-            'total_tokens': 30
-        }
-    } 
+        "choices": [{"message": {"content": "This is a test response from OpenAI"}}],
+        "model": "gpt-3.5-turbo",
+        "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+    }

@@ -16,85 +16,80 @@ logger = get_logger(__name__)
 
 class CodeFormatter:
     """Formats Python code according to best practices."""
-    
+
     def __init__(self):
         self.line_length = 100
         self.indent_size = 4
         self.quote_style = "double"
-    
+
     def format_code(
-        self,
-        code: str,
-        use_black: bool = True,
-        use_isort: bool = True
+        self, code: str, use_black: bool = True, use_isort: bool = True
     ) -> Tuple[str, List[str]]:
         """
         Format Python code using black and isort.
-        
+
         Args:
             code: Python code to format
             use_black: Whether to use black formatter
             use_isort: Whether to use isort for imports
-            
+
         Returns:
             Tuple of (formatted_code, warnings)
         """
         warnings = []
         formatted_code = code
-        
+
         try:
             # First, validate syntax
             ast.parse(code)
         except SyntaxError as e:
             warnings.append(f"Syntax error prevents formatting: {e}")
             return code, warnings
-        
+
         # Apply isort for import sorting
         if use_isort:
             try:
                 formatted_code = self._apply_isort(formatted_code)
             except Exception as e:
                 warnings.append(f"isort formatting failed: {e}")
-        
+
         # Apply black for code formatting
         if use_black:
             try:
                 formatted_code = self._apply_black(formatted_code)
             except Exception as e:
                 warnings.append(f"black formatting failed: {e}")
-        
+
         # Fallback manual formatting if tools fail
         if warnings and formatted_code == code:
             formatted_code = self._manual_format(code)
             warnings.append("Used manual formatting as fallback")
-        
+
         return formatted_code, warnings
-    
+
     def _apply_black(self, code: str) -> str:
         """Apply black formatting."""
         try:
             import black
-            
+
             mode = black.FileMode(
-                line_length=self.line_length,
-                string_normalization=True,
-                is_pyi=False
+                line_length=self.line_length, string_normalization=True, is_pyi=False
             )
-            
+
             return black.format_str(code, mode=mode)
-        
+
         except ImportError:
             logger.warning("black not available, using manual formatting")
             return self._manual_format(code)
         except Exception as e:
             logger.warning(f"black formatting failed: {e}")
             return code
-    
+
     def _apply_isort(self, code: str) -> str:
         """Apply isort for import sorting."""
         try:
             import isort
-            
+
             config = isort.Config(
                 profile="black",
                 line_length=self.line_length,
@@ -102,70 +97,70 @@ class CodeFormatter:
                 include_trailing_comma=True,
                 force_grid_wrap=0,
                 use_parentheses=True,
-                ensure_newline_before_comments=True
+                ensure_newline_before_comments=True,
             )
-            
+
             return isort.code(code, config=config)
-        
+
         except ImportError:
             logger.warning("isort not available, skipping import sorting")
             return code
         except Exception as e:
             logger.warning(f"isort formatting failed: {e}")
             return code
-    
+
     def _manual_format(self, code: str) -> str:
         """Manual formatting as fallback."""
-        lines = code.split('\n')
+        lines = code.split("\n")
         formatted_lines = []
         indent_level = 0
-        
+
         for line in lines:
             stripped = line.strip()
             if not stripped:
-                formatted_lines.append('')
+                formatted_lines.append("")
                 continue
-            
+
             # Basic indentation handling
-            if stripped.startswith(('def ', 'class ', 'if ', 'for ', 'while ', 'with ', 'try:')):
-                formatted_lines.append(' ' * (indent_level * self.indent_size) + stripped)
-                if stripped.endswith(':'):
+            if stripped.startswith(("def ", "class ", "if ", "for ", "while ", "with ", "try:")):
+                formatted_lines.append(" " * (indent_level * self.indent_size) + stripped)
+                if stripped.endswith(":"):
                     indent_level += 1
-            elif stripped in ('else:', 'elif ', 'except:', 'finally:'):
+            elif stripped in ("else:", "elif ", "except:", "finally:"):
                 indent_level = max(0, indent_level - 1)
-                formatted_lines.append(' ' * (indent_level * self.indent_size) + stripped)
+                formatted_lines.append(" " * (indent_level * self.indent_size) + stripped)
                 indent_level += 1
-            elif stripped == 'return' or stripped.startswith('return '):
-                formatted_lines.append(' ' * (indent_level * self.indent_size) + stripped)
+            elif stripped == "return" or stripped.startswith("return "):
+                formatted_lines.append(" " * (indent_level * self.indent_size) + stripped)
                 indent_level = max(0, indent_level - 1)
             else:
-                formatted_lines.append(' ' * (indent_level * self.indent_size) + stripped)
-        
-        return '\n'.join(formatted_lines)
+                formatted_lines.append(" " * (indent_level * self.indent_size) + stripped)
+
+        return "\n".join(formatted_lines)
 
 
 class ProjectGenerator:
     """Generates complete Python project structure with templates."""
-    
+
     def __init__(self):
         self.formatter = CodeFormatter()
         self.test_frameworks = {
-            'pytest': self._generate_pytest_test,
-            'unittest': self._generate_unittest_test
+            "pytest": self._generate_pytest_test,
+            "unittest": self._generate_unittest_test,
         }
-    
+
     def generate_example_usage(self, package_name: str) -> str:
         """Generate example usage code."""
-        return f'''# Example usage of {package_name}
+        return f"""# Example usage of {package_name}
 from {package_name} import AdvancedClass
 
 instance = AdvancedClass()
 instance.do_something()
-'''
+"""
 
     def _generate_gitignore(self, package_name: str, metadata: Dict[str, Any]) -> str:
         """Generate .gitignore file."""
-        return '''# Byte-compiled / optimized / DLL files
+        return """# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -298,76 +293,76 @@ dmypy.json
 # OS
 .DS_Store
 Thumbs.db
-'''
+"""
 
-    def _generate_tests(self, project_dir: Path, package_name: str, modules: List[str], framework: str) -> Dict[str, Any]:
+    def _generate_tests(
+        self, project_dir: Path, package_name: str, modules: List[str], framework: str
+    ) -> Dict[str, Any]:
         """Generate test files for a package."""
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
-        tests_dir = project_dir / 'tests'
-        
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
+        tests_dir = project_dir / "tests"
+
         # Create test directory structure
         test_dirs = [
             tests_dir,
-            tests_dir / 'unit',
-            tests_dir / 'integration',
-            tests_dir / 'fixtures'
+            tests_dir / "unit",
+            tests_dir / "integration",
+            tests_dir / "fixtures",
         ]
-        
+
         for test_dir in test_dirs:
             if not test_dir.exists():
                 test_dir.mkdir(parents=True, exist_ok=True)
-                results['directories_created'].append(str(test_dir.relative_to(project_dir)))
-        
+                results["directories_created"].append(str(test_dir.relative_to(project_dir)))
+
         # Create __init__.py files
         for test_dir in test_dirs:
-            init_file = test_dir / '__init__.py'
+            init_file = test_dir / "__init__.py"
             if not init_file.exists():
                 init_file.write_text('"""Test package."""\n')
-                results['files_created'].append(str(init_file.relative_to(project_dir)))
-        
+                results["files_created"].append(str(init_file.relative_to(project_dir)))
+
         # Create conftest.py
-        conftest_path = tests_dir / 'conftest.py'
+        conftest_path = tests_dir / "conftest.py"
         if not conftest_path.exists():
             conftest_content = self._generate_conftest(package_name, framework)
             conftest_path.write_text(conftest_content)
-            results['files_created'].append('tests/conftest.py')
-        
+            results["files_created"].append("tests/conftest.py")
+
         # Generate test files for each module
         generator = self.test_frameworks.get(framework, self._generate_pytest_test)
-        
+
         for module in modules:
             # Unit tests
-            unit_test_path = tests_dir / 'unit' / f'test_{module}.py'
+            unit_test_path = tests_dir / "unit" / f"test_{module}.py"
             if not unit_test_path.exists():
-                test_content = generator(package_name, module, 'unit')
+                test_content = generator(package_name, module, "unit")
                 unit_test_path.write_text(test_content)
-                results['files_created'].append(f'tests/unit/test_{module}.py')
-            
+                results["files_created"].append(f"tests/unit/test_{module}.py")
+
             # Integration tests (for main modules)
-            if module in ['core', 'main', '__init__']:
-                integration_test_path = tests_dir / 'integration' / f'test_{module}_integration.py'
+            if module in ["core", "main", "__init__"]:
+                integration_test_path = tests_dir / "integration" / f"test_{module}_integration.py"
                 if not integration_test_path.exists():
-                    integration_content = generator(package_name, module, 'integration')
+                    integration_content = generator(package_name, module, "integration")
                     integration_test_path.write_text(integration_content)
-                    results['files_created'].append(f'tests/integration/test_{module}_integration.py')
-        
+                    results["files_created"].append(
+                        f"tests/integration/test_{module}_integration.py"
+                    )
+
         # Create test fixtures
-        fixtures_path = tests_dir / 'fixtures' / 'sample_data.py'
+        fixtures_path = tests_dir / "fixtures" / "sample_data.py"
         if not fixtures_path.exists():
             fixtures_content = self._generate_test_fixtures(package_name)
             fixtures_path.write_text(fixtures_content)
-            results['files_created'].append('tests/fixtures/sample_data.py')
-        
+            results["files_created"].append("tests/fixtures/sample_data.py")
+
         return results
-    
+
     def _generate_conftest(self, package_name: str, framework: str) -> str:
         """Generate conftest.py for pytest configuration."""
-        if framework == 'pytest':
+        if framework == "pytest":
             return f'''"""Pytest configuration and fixtures."""
 
 import pytest
@@ -460,10 +455,10 @@ class BaseTestCase(unittest.TestCase):
         """Clean up after tests."""
         pass
 '''
-    
+
     def _generate_pytest_test(self, package_name: str, module: str, test_type: str) -> str:
         """Generate pytest test file."""
-        if test_type == 'unit':
+        if test_type == "unit":
             return f'''"""Unit tests for {package_name}.{module} module."""
 
 import pytest
@@ -514,7 +509,7 @@ class Test{module.title()}:
         assert input_value is not None
         assert expected is not None
 '''
-        
+
         else:  # integration tests
             return f'''"""Integration tests for {package_name}.{module} module."""
 
@@ -547,7 +542,7 @@ class Test{module.title()}Integration:
         # TODO: Test external integrations
         assert True
 '''
-    
+
     def _generate_unittest_test(self, package_name: str, module: str, test_type: str) -> str:
         """Generate unittest test file."""
         return f'''"""Unit tests for {package_name}.{module} module using unittest."""
@@ -592,7 +587,7 @@ class Test{module.title()}(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 '''
-    
+
     def _generate_test_fixtures(self, package_name: str) -> str:
         """Generate test fixtures file."""
         return f'''"""Test fixtures and sample data for {package_name} tests."""
@@ -640,80 +635,71 @@ class SampleData:
 
 class ConfigFormatter:
     """Formats and generates configuration files."""
-    
+
     def __init__(self):
         self.config_formats = {
-            'toml': self._generate_toml_config,
-            'yaml': self._generate_yaml_config,
-            'json': self._generate_json_config,
-            'ini': self._generate_ini_config
+            "toml": self._generate_toml_config,
+            "yaml": self._generate_yaml_config,
+            "json": self._generate_json_config,
+            "ini": self._generate_ini_config,
         }
-    
+
     def generate_config_files(
         self,
         project_dir: Path,
         package_name: str,
         metadata: Dict[str, Any],
-        formats: List[str] = None
+        formats: List[str] = None,
     ) -> Dict[str, Any]:
         """Generate configuration files in specified formats."""
         if formats is None:
-            formats = ['toml']
-        
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
+            formats = ["toml"]
+
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
         for format_type in formats:
             if format_type in self.config_formats:
                 try:
                     format_results = self.config_formats[format_type](
                         project_dir, package_name, metadata
                     )
-                    results['files_created'].extend(format_results.get('files_created', []))
-                    results['directories_created'].extend(format_results.get('directories_created', []))
-                    results['warnings'].extend(format_results.get('warnings', []))
+                    results["files_created"].extend(format_results.get("files_created", []))
+                    results["directories_created"].extend(
+                        format_results.get("directories_created", [])
+                    )
+                    results["warnings"].extend(format_results.get("warnings", []))
                 except Exception as e:
-                    results['warnings'].append(f"Failed to generate {format_type} config: {e}")
+                    results["warnings"].append(f"Failed to generate {format_type} config: {e}")
             else:
-                results['warnings'].append(f"Unknown config format: {format_type}")
-        
+                results["warnings"].append(f"Unknown config format: {format_type}")
+
         return results
-    
+
     def _generate_toml_config(
-        self,
-        project_dir: Path,
-        package_name: str,
-        metadata: Dict[str, Any]
+        self, project_dir: Path, package_name: str, metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate TOML configuration files."""
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
         # pyproject.toml (main project configuration)
-        pyproject_path = project_dir / 'pyproject.toml'
+        pyproject_path = project_dir / "pyproject.toml"
         if not pyproject_path.exists():
             pyproject_content = self._generate_pyproject_toml(package_name, metadata)
             pyproject_path.write_text(pyproject_content)
-            results['files_created'].append('pyproject.toml')
-        
+            results["files_created"].append("pyproject.toml")
+
         return results
-    
+
     def _generate_pyproject_toml(self, package_name: str, metadata: Dict[str, Any]) -> str:
         """Generate pyproject.toml content."""
-        author = metadata.get('author', 'Unknown Author')
-        email = metadata.get('email', 'author@example.com')
-        description = metadata.get('description', f'{package_name} package')
-        license_name = metadata.get('license', 'MIT')
-        python_requires = metadata.get('python_requires', '>=3.8')
-        dependencies = metadata.get('dependencies', [])
-        
-        return f'''[build-system]
+        author = metadata.get("author", "Unknown Author")
+        email = metadata.get("email", "author@example.com")
+        description = metadata.get("description", f"{package_name} package")
+        license_name = metadata.get("license", "MIT")
+        python_requires = metadata.get("python_requires", ">=3.8")
+        dependencies = metadata.get("dependencies", [])
+
+        return f"""[build-system]
 requires = ["setuptools>=69.0.0", "wheel", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
@@ -791,43 +777,22 @@ testpaths = ["tests"]
 [tool.coverage.run]
 source = ["{package_name}"]
 omit = ["tests/*"]
-'''
-    
+"""
+
     def _generate_yaml_config(
-        self,
-        project_dir: Path,
-        package_name: str,
-        metadata: Dict[str, Any]
+        self, project_dir: Path, package_name: str, metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate YAML configuration files."""
-        return {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-    
+        return {"files_created": [], "directories_created": [], "warnings": []}
+
     def _generate_json_config(
-        self,
-        project_dir: Path,
-        package_name: str,
-        metadata: Dict[str, Any]
+        self, project_dir: Path, package_name: str, metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate JSON configuration files."""
-        return {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-    
+        return {"files_created": [], "directories_created": [], "warnings": []}
+
     def _generate_ini_config(
-        self,
-        project_dir: Path,
-        package_name: str,
-        metadata: Dict[str, Any]
+        self, project_dir: Path, package_name: str, metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate INI configuration files."""
-        return {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
+        return {"files_created": [], "directories_created": [], "warnings": []}

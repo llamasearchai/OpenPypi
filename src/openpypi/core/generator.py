@@ -5,370 +5,370 @@ Main project generator for OpenPypi.
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
+from ..utils.formatters import ConfigFormatter
+from ..utils.formatters import ProjectGenerator as BaseProjectGenerator
+from ..utils.logger import get_logger
 from .config import Config
 from .exceptions import GenerationError
-from ..utils.formatters import ProjectGenerator as BaseProjectGenerator, ConfigFormatter
-from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 class ProjectGenerator:
     """Main project generator that creates complete Python projects."""
-    
+
     def __init__(self, config: Config):
         self.config = config
         self.base_generator = BaseProjectGenerator()
         self.config_formatter = ConfigFormatter()
-        
+
     def generate(self) -> Dict[str, Any]:
         """Generate a complete Python project."""
         try:
             # Validate configuration
             self.config.validate()
-            
+
             # Create project directory
             project_dir = self.config.output_dir / self.config.project_name
             project_dir.mkdir(parents=True, exist_ok=True)
-            
+
             logger.info(f"Generating project in {project_dir}")
-            
+
             results = {
-                'project_dir': str(project_dir),
-                'files_created': [],
-                'directories_created': [],
-                'commands_run': [],
-                'warnings': []
+                "project_dir": str(project_dir),
+                "files_created": [],
+                "directories_created": [],
+                "commands_run": [],
+                "warnings": [],
             }
-            
+
             # Generate basic project structure
             structure_results = self._create_project_structure(project_dir)
             self._merge_results(results, structure_results)
-            
+
             # Generate configuration files
             config_results = self._create_config_files(project_dir)
             self._merge_results(results, config_results)
-            
+
             # Generate source code
             source_results = self._create_source_code(project_dir)
             self._merge_results(results, source_results)
-            
+
             # Generate tests
             if self.config.create_tests:
                 test_results = self._create_tests(project_dir)
                 self._merge_results(results, test_results)
-            
+
             # Generate documentation
             docs_results = self._create_documentation(project_dir)
             self._merge_results(results, docs_results)
-            
+
             # Generate Docker files
             if self.config.use_docker:
                 docker_results = self._create_docker_files(project_dir)
                 self._merge_results(results, docker_results)
-            
+
             # Generate CI/CD files
             if self.config.use_github_actions:
                 ci_results = self._create_ci_files(project_dir)
                 self._merge_results(results, ci_results)
-            
+
             # Initialize git repository
             if self.config.use_git:
                 git_results = self._initialize_git(project_dir)
                 self._merge_results(results, git_results)
-            
+
             # Install dependencies
             install_results = self._install_dependencies(project_dir)
             self._merge_results(results, install_results)
-            
+
             logger.info("Project generation completed successfully")
             return results
-            
+
         except Exception as e:
             logger.error(f"Project generation failed: {e}")
             raise GenerationError(f"Failed to generate project: {e}")
-    
+
     def _create_project_structure(self, project_dir: Path) -> Dict[str, Any]:
         """Create basic project directory structure."""
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
         # Create directories
         directories = [
-            'src' / self.config.package_name,
-            'tests',
-            'docs',
-            'scripts',
-            'data',
-            'configs'
+            Path("src") / self.config.package_name,
+            Path("tests"),
+            Path("docs"),
+            Path("scripts"),
+            Path("data"),
+            Path("configs"),
         ]
-        
+
         if self.config.use_fastapi:
-            directories.extend([
-                'src' / self.config.package_name / 'api',
-                'src' / self.config.package_name / 'models',
-                'src' / self.config.package_name / 'services'
-            ])
-        
+            directories.extend(
+                [
+                    Path("src") / self.config.package_name / "api",
+                    Path("src") / self.config.package_name / "models",
+                    Path("src") / self.config.package_name / "services",
+                ]
+            )
+
         for directory in directories:
             full_path = project_dir / directory
             full_path.mkdir(parents=True, exist_ok=True)
-            results['directories_created'].append(str(directory))
-        
+            results["directories_created"].append(str(directory))
+
         # Create __init__.py files
         init_files = [
-            'src' / self.config.package_name / '__init__.py',
-            'tests' / '__init__.py'
+            Path("src") / self.config.package_name / "__init__.py",
+            Path("tests") / "__init__.py",
         ]
-        
+
         if self.config.use_fastapi:
-            init_files.extend([
-                'src' / self.config.package_name / 'api' / '__init__.py',
-                'src' / self.config.package_name / 'models' / '__init__.py',
-                'src' / self.config.package_name / 'services' / '__init__.py'
-            ])
-        
+            init_files.extend(
+                [
+                    Path("src") / self.config.package_name / "api" / "__init__.py",
+                    Path("src") / self.config.package_name / "models" / "__init__.py",
+                    Path("src") / self.config.package_name / "services" / "__init__.py",
+                ]
+            )
+
         for init_file in init_files:
             full_path = project_dir / init_file
             full_path.write_text('"""Package initialization."""\n')
-            results['files_created'].append(str(init_file))
-        
+            results["files_created"].append(str(init_file))
+
         return results
-    
+
     def _create_config_files(self, project_dir: Path) -> Dict[str, Any]:
         """Create configuration files."""
         metadata = {
-            'author': self.config.author,
-            'email': self.config.email,
-            'description': self.config.description,
-            'license': self.config.license,
-            'python_requires': self.config.python_requires,
-            'dependencies': self._get_dependencies(),
-            'python_versions': ['3.8', '3.9', '3.10', '3.11', '3.12']
+            "author": self.config.author,
+            "email": self.config.email,
+            "description": self.config.description,
+            "license": self.config.license,
+            "python_requires": self.config.python_requires,
+            "dependencies": self._get_dependencies(),
+            "python_versions": ["3.8", "3.9", "3.10", "3.11", "3.12"],
         }
-        
+
         # Generate pyproject.toml
         results = self.config_formatter.generate_config_files(
-            project_dir, self.config.package_name, metadata, ['toml']
+            project_dir, self.config.package_name, metadata, ["toml"]
         )
-        
+
         # Create requirements files
         self._create_requirements_files(project_dir, results)
-        
+
         # Create .gitignore
-        gitignore_content = self.base_generator._generate_gitignore(self.config.package_name, metadata)
-        gitignore_path = project_dir / '.gitignore'
+        gitignore_content = self.base_generator._generate_gitignore(
+            self.config.package_name, metadata
+        )
+        gitignore_path = project_dir / ".gitignore"
         gitignore_path.write_text(gitignore_content)
-        results['files_created'].append('.gitignore')
-        
+        results["files_created"].append(".gitignore")
+
         return results
-    
+
     def _create_source_code(self, project_dir: Path) -> Dict[str, Any]:
         """Create source code files."""
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
         # Main module
         main_module_content = self._generate_main_module()
-        main_module_path = project_dir / 'src' / self.config.package_name / 'main.py'
+        main_module_path = project_dir / "src" / self.config.package_name / "main.py"
         main_module_path.write_text(main_module_content)
-        results['files_created'].append(f'src/{self.config.package_name}/main.py')
-        
+        results["files_created"].append(f"src/{self.config.package_name}/main.py")
+
         # CLI module
         cli_module_content = self._generate_cli_module()
-        cli_module_path = project_dir / 'src' / self.config.package_name / 'cli.py'
+        cli_module_path = project_dir / "src" / self.config.package_name / "cli.py"
         cli_module_path.write_text(cli_module_content)
-        results['files_created'].append(f'src/{self.config.package_name}/cli.py')
-        
+        results["files_created"].append(f"src/{self.config.package_name}/cli.py")
+
         # Utils module
         utils_module_content = self._generate_utils_module()
-        utils_module_path = project_dir / 'src' / self.config.package_name / 'utils.py'
+        utils_module_path = project_dir / "src" / self.config.package_name / "utils.py"
         utils_module_path.write_text(utils_module_content)
-        results['files_created'].append(f'src/{self.config.package_name}/utils.py')
-        
+        results["files_created"].append(f"src/{self.config.package_name}/utils.py")
+
         # FastAPI app
         if self.config.use_fastapi:
             fastapi_results = self._create_fastapi_app(project_dir)
             self._merge_results(results, fastapi_results)
-        
+
         # OpenAI integration
         if self.config.use_openai:
             openai_results = self._create_openai_integration(project_dir)
             self._merge_results(results, openai_results)
-        
+
         return results
-    
+
     def _create_tests(self, project_dir: Path) -> Dict[str, Any]:
         """Create test files."""
-        modules = ['main', 'utils', 'cli']
+        modules = ["main", "utils", "cli"]
         if self.config.use_fastapi:
-            modules.extend(['api', 'models', 'services'])
+            modules.extend(["api", "models", "services"])
         if self.config.use_openai:
-            modules.append('openai_client')
-        
+            modules.append("openai_client")
+
         return self.base_generator._generate_tests(
             project_dir, self.config.package_name, modules, self.config.test_framework
         )
-    
+
     def _create_documentation(self, project_dir: Path) -> Dict[str, Any]:
         """Create documentation files."""
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
         # README.md
         readme_content = self._generate_readme()
-        readme_path = project_dir / 'README.md'
+        readme_path = project_dir / "README.md"
         readme_path.write_text(readme_content)
-        results['files_created'].append('README.md')
-        
+        results["files_created"].append("README.md")
+
         # CHANGELOG.md
         changelog_content = self._generate_changelog()
-        changelog_path = project_dir / 'CHANGELOG.md'
+        changelog_path = project_dir / "CHANGELOG.md"
         changelog_path.write_text(changelog_content)
-        results['files_created'].append('CHANGELOG.md')
-        
+        results["files_created"].append("CHANGELOG.md")
+
         # LICENSE
         license_content = self._generate_license()
-        license_path = project_dir / 'LICENSE'
+        license_path = project_dir / "LICENSE"
         license_path.write_text(license_content)
-        results['files_created'].append('LICENSE')
-        
+        results["files_created"].append("LICENSE")
+
         return results
-    
+
     def _create_docker_files(self, project_dir: Path) -> Dict[str, Any]:
         """Create Docker-related files."""
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
         # Dockerfile
         dockerfile_content = self._generate_dockerfile()
-        dockerfile_path = project_dir / 'Dockerfile'
+        dockerfile_path = project_dir / "Dockerfile"
         dockerfile_path.write_text(dockerfile_content)
-        results['files_created'].append('Dockerfile')
-        
+        results["files_created"].append("Dockerfile")
+
         # docker-compose.yml
         compose_content = self._generate_docker_compose()
-        compose_path = project_dir / 'docker-compose.yml'
+        compose_path = project_dir / "docker-compose.yml"
         compose_path.write_text(compose_content)
-        results['files_created'].append('docker-compose.yml')
-        
+        results["files_created"].append("docker-compose.yml")
+
         # .dockerignore
         dockerignore_content = self._generate_dockerignore()
-        dockerignore_path = project_dir / '.dockerignore'
+        dockerignore_path = project_dir / ".dockerignore"
         dockerignore_path.write_text(dockerignore_content)
-        results['files_created'].append('.dockerignore')
-        
+        results["files_created"].append(".dockerignore")
+
         return results
-    
+
     def _create_ci_files(self, project_dir: Path) -> Dict[str, Any]:
         """Create CI/CD configuration files."""
         # Create GitHub Actions workflow
-        workflows_dir = project_dir / '.github' / 'workflows'
+        workflows_dir = project_dir / ".github" / "workflows"
         workflows_dir.mkdir(parents=True, exist_ok=True)
-        
+
         workflow_content = self._generate_github_workflow()
-        workflow_path = workflows_dir / 'ci.yml'
+        workflow_path = workflows_dir / "ci.yml"
         workflow_path.write_text(workflow_content)
-        
+
         return {
-            'files_created': ['.github/workflows/ci.yml'],
-            'directories_created': ['.github/workflows'],
-            'warnings': []
+            "files_created": [".github/workflows/ci.yml"],
+            "directories_created": [".github/workflows"],
+            "warnings": [],
         }
-    
+
     def _initialize_git(self, project_dir: Path) -> Dict[str, Any]:
         """Initialize git repository."""
         results = {
-            'files_created': [],
-            'directories_created': [],
-            'commands_run': [],
-            'warnings': []
+            "files_created": [],
+            "directories_created": [],
+            "commands_run": [],
+            "warnings": [],
         }
-        
+
         try:
             # Initialize git repo
-            subprocess.run(['git', 'init'], cwd=project_dir, check=True, capture_output=True)
-            results['commands_run'].append('git init')
-            
+            subprocess.run(["git", "init"], cwd=project_dir, check=True, capture_output=True)
+            results["commands_run"].append("git init")
+
             # Add all files
-            subprocess.run(['git', 'add', '.'], cwd=project_dir, check=True, capture_output=True)
-            results['commands_run'].append('git add .')
-            
+            subprocess.run(["git", "add", "."], cwd=project_dir, check=True, capture_output=True)
+            results["commands_run"].append("git add .")
+
             # Initial commit
-            subprocess.run(['git', 'commit', '-m', 'Initial commit'], 
-                          cwd=project_dir, check=True, capture_output=True)
-            results['commands_run'].append('git commit -m "Initial commit"')
-            
+            subprocess.run(
+                ["git", "commit", "-m", "Initial commit"],
+                cwd=project_dir,
+                check=True,
+                capture_output=True,
+            )
+            results["commands_run"].append('git commit -m "Initial commit"')
+
         except subprocess.CalledProcessError as e:
-            results['warnings'].append(f"Git initialization failed: {e}")
+            results["warnings"].append(f"Git initialization failed: {e}")
         except FileNotFoundError:
-            results['warnings'].append("Git not found - skipping git initialization")
-        
+            results["warnings"].append("Git not found - skipping git initialization")
+
         return results
-    
+
     def _install_dependencies(self, project_dir: Path) -> Dict[str, Any]:
         """Install project dependencies."""
         results = {
-            'files_created': [],
-            'directories_created': [],
-            'commands_run': [],
-            'warnings': []
+            "files_created": [],
+            "directories_created": [],
+            "commands_run": [],
+            "warnings": [],
         }
-        
+
         try:
             # Create virtual environment
-            subprocess.run(['python', '-m', 'venv', 'venv'], 
-                          cwd=project_dir, check=True, capture_output=True)
-            results['commands_run'].append('python -m venv venv')
-            
+            subprocess.run(
+                ["python", "-m", "venv", "venv"], cwd=project_dir, check=True, capture_output=True
+            )
+            results["commands_run"].append("python -m venv venv")
+
             # Install in development mode
-            pip_cmd = str(project_dir / 'venv' / 'bin' / 'pip')
+            pip_cmd = str(project_dir / "venv" / "bin" / "pip")
             if not Path(pip_cmd).exists():
-                pip_cmd = str(project_dir / 'venv' / 'Scripts' / 'pip.exe')  # Windows
-            
-            subprocess.run([pip_cmd, 'install', '-e', '.[dev]'], 
-                          cwd=project_dir, check=True, capture_output=True)
-            results['commands_run'].append('pip install -e .[dev]')
-            
+                pip_cmd = str(project_dir / "venv" / "Scripts" / "pip.exe")  # Windows
+
+            subprocess.run(
+                [pip_cmd, "install", "-e", ".[dev]"],
+                cwd=project_dir,
+                check=True,
+                capture_output=True,
+            )
+            results["commands_run"].append("pip install -e .[dev]")
+
         except subprocess.CalledProcessError as e:
-            results['warnings'].append(f"Dependency installation failed: {e}")
+            results["warnings"].append(f"Dependency installation failed: {e}")
         except FileNotFoundError:
-            results['warnings'].append("Python not found - skipping dependency installation")
-        
+            results["warnings"].append("Python not found - skipping dependency installation")
+
         return results
-    
+
     def _get_dependencies(self) -> List[str]:
         """Get list of dependencies based on configuration."""
         deps = list(self.config.dependencies)
-        
+
         if self.config.use_fastapi:
-            deps.extend(['fastapi>=0.104.0', 'uvicorn>=0.24.0'])
-        
+            deps.extend(["fastapi>=0.104.0", "uvicorn>=0.24.0"])
+
         if self.config.use_openai:
-            deps.append('openai>=1.0.0')
-        
+            deps.append("openai>=1.0.0")
+
         return deps
-    
+
     def _merge_results(self, target: Dict[str, Any], source: Dict[str, Any]) -> None:
         """Merge results from sub-operations."""
-        for key in ['files_created', 'directories_created', 'commands_run', 'warnings']:
+        for key in ["files_created", "directories_created", "commands_run", "warnings"]:
             if key in source:
                 target[key].extend(source[key])
-    
+
     # Content generation methods
     def _generate_main_module(self) -> str:
         """Generate main module content."""
@@ -422,7 +422,7 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 '''
-    
+
     def _generate_cli_module(self) -> str:
         """Generate CLI module content."""
         return f'''"""
@@ -511,7 +511,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 if __name__ == "__main__":
     sys.exit(main())
 '''
-    
+
     def _generate_utils_module(self) -> str:
         """Generate utils module content."""
         return f'''"""
@@ -593,79 +593,73 @@ def setup_logging(level: str = "INFO") -> None:
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 '''
-    
+
     def _create_requirements_files(self, project_dir: Path, results: Dict[str, Any]) -> None:
         """Create requirements files."""
         # requirements.txt
         deps = self._get_dependencies()
-        requirements_content = '\n'.join(deps) + '\n'
-        requirements_path = project_dir / 'requirements.txt'
+        requirements_content = "\n".join(deps) + "\n"
+        requirements_path = project_dir / "requirements.txt"
         requirements_path.write_text(requirements_content)
-        results['files_created'].append('requirements.txt')
-        
+        results["files_created"].append("requirements.txt")
+
         # requirements-dev.txt
         dev_deps = [
-            'pytest>=7.0.0',
-            'pytest-cov>=4.0.0',
-            'black>=23.0.0',
-            'isort>=5.12.0',
-            'flake8>=6.0.0',
-            'pylint>=2.17.0',
-            'mypy>=1.4.0'
+            "pytest>=7.0.0",
+            "pytest-cov>=4.0.0",
+            "black>=23.0.0",
+            "isort>=5.12.0",
+            "flake8>=6.0.0",
+            "pylint>=2.17.0",
+            "mypy>=1.4.0",
         ]
         dev_deps.extend(self.config.dev_dependencies)
-        dev_requirements_content = '-r requirements.txt\n' + '\n'.join(dev_deps) + '\n'
-        dev_requirements_path = project_dir / 'requirements-dev.txt'
+        dev_requirements_content = "-r requirements.txt\n" + "\n".join(dev_deps) + "\n"
+        dev_requirements_path = project_dir / "requirements-dev.txt"
         dev_requirements_path.write_text(dev_requirements_content)
-        results['files_created'].append('requirements-dev.txt')
-    
+        results["files_created"].append("requirements-dev.txt")
+
     def _create_fastapi_app(self, project_dir: Path) -> Dict[str, Any]:
         """Create FastAPI application files."""
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
         # Main FastAPI app
         app_content = self._generate_fastapi_app()
-        app_path = project_dir / 'src' / self.config.package_name / 'api' / 'app.py'
+        app_path = project_dir / "src" / self.config.package_name / "api" / "app.py"
         app_path.write_text(app_content)
-        results['files_created'].append(f'src/{self.config.package_name}/api/app.py')
-        
+        results["files_created"].append(f"src/{self.config.package_name}/api/app.py")
+
         # API routes
         routes_content = self._generate_api_routes()
-        routes_path = project_dir / 'src' / self.config.package_name / 'api' / 'routes.py'
+        routes_path = project_dir / "src" / self.config.package_name / "api" / "routes.py"
         routes_path.write_text(routes_content)
-        results['files_created'].append(f'src/{self.config.package_name}/api/routes.py')
-        
+        results["files_created"].append(f"src/{self.config.package_name}/api/routes.py")
+
         # Pydantic models
         models_content = self._generate_pydantic_models()
-        models_path = project_dir / 'src' / self.config.package_name / 'models' / 'schemas.py'
+        models_path = project_dir / "src" / self.config.package_name / "models" / "schemas.py"
         models_path.write_text(models_content)
-        results['files_created'].append(f'src/{self.config.package_name}/models/schemas.py')
-        
+        results["files_created"].append(f"src/{self.config.package_name}/models/schemas.py")
+
         return results
-    
+
     def _create_openai_integration(self, project_dir: Path) -> Dict[str, Any]:
         """Create OpenAI integration files."""
-        results = {
-            'files_created': [],
-            'directories_created': [],
-            'warnings': []
-        }
-        
+        results = {"files_created": [], "directories_created": [], "warnings": []}
+
         # OpenAI client
         client_content = self._generate_openai_client()
-        client_path = project_dir / 'src' / self.config.package_name / 'services' / 'openai_client.py'
+        client_path = (
+            project_dir / "src" / self.config.package_name / "services" / "openai_client.py"
+        )
         client_path.write_text(client_content)
-        results['files_created'].append(f'src/{self.config.package_name}/services/openai_client.py')
-        
+        results["files_created"].append(f"src/{self.config.package_name}/services/openai_client.py")
+
         return results
-    
+
     # Additional content generation methods would continue here...
     # For brevity, I'll include key methods
-    
+
     def _generate_fastapi_app(self) -> str:
         """Generate FastAPI application code."""
         return f'''"""
@@ -720,10 +714,22 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
 '''
-    
+
+    def _generate_fastapi_section(self) -> str:
+        """Generate FastAPI section for README."""
+        return f"""
+Start the FastAPI server:
+
+```bash
+uvicorn {self.config.package_name}.api.app:app --reload
+```
+
+Visit http://localhost:8000/docs for the interactive API documentation.
+"""
+
     def _generate_readme(self) -> str:
         """Generate README.md content."""
-        return f'''# {self.config.project_name}
+        return f"""# {self.config.project_name}
 
 {self.config.description}
 
@@ -769,15 +775,7 @@ print(result)
 ```
 
 {"## API Usage" if self.config.use_fastapi else ""}
-{"" if not self.config.use_fastapi else f'''
-Start the FastAPI server:
-
-```bash
-uvicorn {self.config.package_name}.api.app:app --reload
-```
-
-Visit http://localhost:8000/docs for the interactive API documentation.
-'''}
+{self._generate_fastapi_section() if self.config.use_fastapi else ""}
 
 ## Development
 
@@ -825,17 +823,29 @@ This project is licensed under the {self.config.license} License.
 ## Author
 
 {self.config.author} <{self.config.email}>
-'''
-    
+"""
+
+    def _get_backslash_continuation(self) -> str:
+        """Get backslash for shell continuation."""
+        return "\\"
+
     def _generate_dockerfile(self) -> str:
         """Generate Dockerfile content."""
-        return f'''FROM python:3.11-slim
+        backslash = self._get_backslash_continuation()
+        expose_port = "EXPOSE 8000" if self.config.use_fastapi else ""
+
+        if self.config.use_fastapi:
+            cmd = f'CMD ["uvicorn", "{self.config.package_name}.api.app:app", "--host", "0.0.0.0", "--port", "8000"]'
+        else:
+            cmd = f'CMD ["{self.config.package_name}", "run"]'
+
+        return f"""FROM python:3.11-slim
 
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \\
-    build-essential \\
+RUN apt-get update && apt-get install -y {backslash}
+    build-essential {backslash}
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -853,15 +863,15 @@ RUN useradd --create-home --shell /bin/bash app
 USER app
 
 # Expose port for FastAPI
-{"EXPOSE 8000" if self.config.use_fastapi else ""}
+{expose_port}
 
 # Set the default command
-{"CMD [\"uvicorn\", \"" + self.config.package_name + ".api.app:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]" if self.config.use_fastapi else f'CMD ["{self.config.package_name}", "run"]'}
-'''
-    
+{cmd}
+"""
+
     def _generate_github_workflow(self) -> str:
         """Generate GitHub Actions workflow."""
-        return f'''name: CI
+        return f"""name: CI
 
 on:
   push:
@@ -913,12 +923,12 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
-'''
+"""
 
     # Additional methods for generating other files...
     def _generate_changelog(self) -> str:
         """Generate CHANGELOG.md content."""
-        return f'''# Changelog
+        return f"""# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -940,12 +950,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release
-'''
+"""
 
     def _generate_license(self) -> str:
         """Generate LICENSE file content."""
-        if self.config.license.upper() == 'MIT':
-            return f'''MIT License
+        if self.config.license.upper() == "MIT":
+            return f"""MIT License
 
 Copyright (c) 2024 {self.config.author}
 
@@ -966,14 +976,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
         else:
-            return f'# {self.config.license} License\n\nSee {self.config.license} license terms.'
+            return f"# {self.config.license} License\n\nSee {self.config.license} license terms."
 
     def _generate_docker_compose(self) -> str:
         """Generate docker-compose.yml content."""
         if self.config.use_fastapi:
-            return f'''version: '3.8'
+            return f"""version: '3.8'
 
 services:
   {self.config.package_name}:
@@ -985,9 +995,9 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
-'''
+"""
         else:
-            return f'''version: '3.8'
+            return f"""version: '3.8'
 
 services:
   {self.config.package_name}:
@@ -997,11 +1007,11 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
-'''
+"""
 
     def _generate_dockerignore(self) -> str:
         """Generate .dockerignore content."""
-        return '''.git
+        return """.git
 .gitignore
 README.md
 CHANGELOG.md
@@ -1024,7 +1034,7 @@ venv/
 .env
 .DS_Store
 Thumbs.db
-'''
+"""
 
     def _generate_api_routes(self) -> str:
         """Generate API routes for FastAPI."""
@@ -1198,4 +1208,4 @@ class OpenAIClient:
         except Exception as e:
             logger.error(f"Embedding generation failed: {{e}}")
             raise
-''' 
+'''

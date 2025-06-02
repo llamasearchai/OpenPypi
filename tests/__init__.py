@@ -1,1 +1,1 @@
-"""Test package for OpenPypi.""" 
+"""Test package for OpenPypi."""

@@ -9,14 +9,14 @@ __version__ = "0.1.0"
 __author__ = "OpenPypi Team"
 __email__ = "team@openpypi.com"
 
-from .core import ProjectGenerator, Config
-from .core.exceptions import OpenPypiError, ValidationError, GenerationError
+from .core import Config, ProjectGenerator
+from .core.exceptions import GenerationError, OpenPypiError, ValidationError
 
 __all__ = [
     "ProjectGenerator",
-    "Config", 
+    "Config",
     "OpenPypiError",
     "ValidationError",
     "GenerationError",
-    "__version__"
+    "__version__",
 ]
