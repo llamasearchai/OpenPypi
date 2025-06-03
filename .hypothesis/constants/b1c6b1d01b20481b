@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/utils/formatters.py
+# hypothesis_version: 6.133.2
+
+[100, '"""Test package."""\n', ':', '>=3.8', 'MIT', 'Unknown Author', '__init__', '__init__.py', 'author', 'author@example.com', 'black', 'class ', 'conftest.py', 'core', 'def ', 'dependencies', 'description', 'directories_created', 'double', 'elif ', 'else:', 'email', 'except:', 'files_created', 'finally:', 'fixtures', 'for ', 'if ', 'ini', 'integration', 'json', 'license', 'main', 'pyproject.toml', 'pytest', 'python_requires', 'return', 'return ', 'sample_data.py', 'tests', 'tests/conftest.py', 'toml', 'try:', 'unit', 'unittest', 'warnings', 'while ', 'with ', 'yaml']

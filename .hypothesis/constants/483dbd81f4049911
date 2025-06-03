@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/packaging.py
+# hypothesis_version: 6.133.2
+
+[300, '*', '-m', 'Build command failed', 'build', 'build_results', 'dist', 'dist_files', 'error', 'exit_code', 'generation_result', 'project_path', 'python', 'stderr', 'stdout', 'success', 'testing']

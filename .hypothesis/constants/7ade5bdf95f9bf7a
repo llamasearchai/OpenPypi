@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/utils/mock_data.py
+# hypothesis_version: 6.133.2
+
+['Apache-2.0', 'BSD-3-Clause', 'GPL-3.0', 'MIT', 'created_at', 'description', 'django', 'fastapi', 'flask', 'framework', 'go', 'id', 'is_public', 'javascript', 'language', 'license', 'metadata', 'name', 'none', 'python', 'rust']

@@ -37,3 +37,15 @@ class DependencyError(OpenPypiError):
     """Raised when dependency resolution fails."""
 
     pass
+
+
+class ProviderError(OpenPypiError):
+    """Raised when provider operations fail."""
+
+    pass
+
+
+class StageError(OpenPypiError):
+    """Raised when stage execution fails."""
+
+    pass

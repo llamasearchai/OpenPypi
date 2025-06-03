@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/providers/github.py
+# hypothesis_version: 6.133.2
+
+[0.0, 200, 201, 204, 300, '-m', '.', '/', '2024-11-28', 'Accept', 'Add CI/CD workflow', 'Authorization', 'GITHUB_TOKEN', 'GITHUB_USERNAME', 'Initial commit', 'X-GitHub-Api-Version', 'add', 'advanced_security', 'api_url', 'body', 'clone', 'commit', 'content', 'create_releases', 'create_repository', 'daily', "default-src 'self'", 'directory', 'draft', 'enabled', 'encrypted_token', 'encrypted_value', 'estimated_cost', 'git', 'github', 'interval', 'main', 'manage_issues', 'manage_secrets', 'message', 'name', 'origin', 'package-ecosystem', 'pip', 'prerelease', 'push', 'schedule', 'secret_scanning', 'setup_ci_cd', 'setup_webhooks', 'status', 'tag_name', 'token', 'updates', 'username', 'version']

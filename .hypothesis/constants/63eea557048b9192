@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/__init__.py
+# hypothesis_version: 6.133.2
+
+[0.0, 'DeploymentStage', 'FAILED', 'GenerationStage', 'PackagingStage', 'Pipeline', 'SUCCESS', 'Stage', 'StageRegistry', 'StageResult', 'StageStatus', 'TestingStage', 'ValidationStage', 'continue_on_failure', 'execution_time', 'failed', 'failed_count', 'message', 'overall_status', 'pending', 'pipeline_name', 'register_stage', 'registry', 'running', 'skipped', 'skipped_count', 'stage', 'stage_results', 'status', 'success', 'success_count', 'total_execution_time', 'total_stages']

@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/providers/cloud.py
+# hypothesis_version: 6.133.2
+
+['AWS_ACCESS_KEY_ID', 'AZURE_CREDENTIALS', 'app', 'aws', 'aws_access_key', 'azure_credentials', 'cloud', 'cloud_provider', 'configure_scaling', 'deploy_kubernetes', 'deployment.yaml', 'gcp_credentials', 'ingress.yaml', 'package_name', 'replicas', 'security_policies', 'service.yaml', 'setup_monitoring']

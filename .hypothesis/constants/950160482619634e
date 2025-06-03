@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/health.py
+# hypothesis_version: 6.133.2
+
+[b'health check', '/detailed', '/ping', 'Simple Ping Endpoint', 'api', 'database', 'degraded', 'filesystem', 'healthy', 'not_checked', 'not_configured', 'openai_api', 'pong', 'startup_time', 'unhealthy']

@@ -1,0 +1,52 @@
+# Core FastAPI stack
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+gunicorn>=21.2.0
+python-multipart>=0.0.6
+
+# HTTP and networking
+httpx>=0.25.0
+requests>=2.31.0
+
+# Data validation and serialization
+pydantic>=2.0.0
+pydantic[email]>=2.0.0
+
+# Authentication and security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+cryptography>=41.0.0
+
+# Database (optional, for future use)
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+
+# Configuration management
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+toml>=0.10.0
+
+# Template engine
+jinja2>=3.1.0
+
+# OpenAI integration
+openai>=1.0.0
+
+# File processing
+pathlib-mate>=1.0.0
+
+# System monitoring
+psutil>=5.9.0
+
+# Logging and monitoring
+structlog>=23.1.0
+
+# CLI interface
+click>=8.1.0
+rich>=13.0.0
+typer>=0.9.0
+
+# Utilities
+python-dateutil>=2.8.0
+packaging>=23.0 

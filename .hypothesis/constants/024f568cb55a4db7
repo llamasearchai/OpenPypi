@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/__init__.py
+# hypothesis_version: 6.133.2
+
+['auth', 'generation', 'health', 'openai_integration', 'projects']

@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/providers/openai_provider.py
+# hypothesis_version: 6.133.2
+
+[0.0015, 0.002, 0.01, 0.03, 0.06, 0.3, 0.5, 1000, 2000, 8192, 16385, 128000, 'N/A', 'OPENAI_API_KEY', 'api_key', 'capabilities', 'code_data', 'code_generation', 'code_review', 'completion_tokens', 'configuration', 'content', 'cost_per_1k_input', 'cost_per_1k_output', 'estimated_input_cost', 'estimated_total_cost', 'finish_reason', 'function_call', 'functions', 'gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo-preview', 'max_tokens', 'messages', 'metadata', 'model', 'openai', 'professional', 'prompt_tokens', 'provider', 'python', 'raw_content', 'response_time', 'review', 'role', 'score', 'success', 'supports_functions', 'supports_vision', 'system', 'temperature', 'test', 'timeout', 'tokens_used', 'total_tokens', 'usage', 'user']

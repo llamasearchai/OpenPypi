@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/validation.py
+# hypothesis_version: 6.133.2
+
+[100, 'Author name is valid', 'Version is required', 'Version is valid', '^[a-z][a-z0-9_]*$', 'and', 'as', 'assert', 'author', 'break', 'class', 'continue', 'def', 'del', 'dependencies', 'elif', 'else', 'email', 'except', 'exec', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'message', 'not', 'or', 'output_dir', 'output_directory', 'package_name', 'pass', 'print', 'project_config', 'project_name', 'python_requires', 'raise', 'return', 'try', 'valid', 'validated_config', 'validation_results', 'version', 'while', 'with', 'yield']

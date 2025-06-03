@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/testing.py
+# hypothesis_version: 6.133.2
+
+[120, 300, '--check', '--check-only', '--tb=short', '-f', '-m', '-r', '-v', 'bandit', 'black', 'error', 'exit_code', 'failed_checks', 'flake8', 'generation', 'generation_result', 'isort', 'json', 'linting', 'mypy', 'project_path', 'pytest', 'python', 'security_scan', 'src/', 'stderr', 'stdout', 'success', 'test_results', 'tests/', 'type_checking']

@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/dependencies.py
+# hypothesis_version: 6.133.2
+
+['Invalid API Key', 'X-API-Key', 'api_key', 'authenticated_user', 'development_key', 'username']

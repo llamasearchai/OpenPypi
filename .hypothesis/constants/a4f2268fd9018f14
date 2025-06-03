@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/schemas.py
+# hypothesis_version: 6.133.2
+
+[0.0, 0.7, 1.0, 100, 150, 4000, '0.1.0', "Author's email.", "Author's name.", 'OpenAI model to use.', 'OpenPypi User', 'Percentage progress.', 'Project description.', 'The project name.', '^[a-zA-Z0-9_-]+$', '^[a-z_][a-z0-9_]*$', 'healthy', 'pytest', 'text-davinci-003', 'user@example.com']

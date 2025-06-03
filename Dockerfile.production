@@ -1,0 +1,177 @@
+# Production-ready multi-stage Dockerfile for OpenPypi
+# Stage 1: Build stage with all dependencies and build tools
+FROM python:3.11-slim as builder
+
+# Set environment variables for build
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PIP_NO_CACHE_DIR=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies needed for building
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy dependency files
+COPY requirements.txt requirements-dev.txt pyproject.toml ./
+
+# Install Python dependencies
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -r requirements.txt && \
+    pip install -r requirements-dev.txt
+
+
+# Stage 2: Development stage with full tooling
+FROM builder as development
+
+WORKDIR /app
+
+# Install development tools
+RUN pip install ipython jupyter
+
+# Copy source code
+COPY . .
+
+# Install package in development mode
+RUN pip install -e .
+
+# Create non-root user for development
+RUN useradd --create-home --shell /bin/bash --uid 1000 dev && \
+    chown -R dev:dev /app
+USER dev
+
+EXPOSE 8000
+
+CMD ["uvicorn", "openpypi.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+
+# Stage 3: Production base with minimal runtime dependencies
+FROM python:3.11-slim as production-base
+
+# Set production environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install only runtime system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Create application directory
+WORKDIR /app
+
+# Create non-root user with specific UID/GID for security
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
+
+
+# Stage 4: Production application
+FROM production-base as production
+
+# Copy application code
+COPY --chown=appuser:appuser . .
+
+# Install the package
+RUN pip install .
+
+# Set up proper permissions
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Create directories for logs and data
+RUN mkdir -p /app/logs /app/data /app/generated_projects
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Production command with optimizations
+CMD ["gunicorn", "openpypi.api.app:app", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--workers", "4", \
+     "--bind", "0.0.0.0:8000", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "--timeout", "120", \
+     "--keepalive", "5", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100"]
+
+
+# Stage 5: Testing stage for CI/CD
+FROM development as testing
+
+# Install testing dependencies
+RUN pip install pytest-xdist pytest-cov bandit safety
+
+# Copy test files
+COPY tests/ ./tests/
+
+# Run security checks
+RUN bandit -r src/ -f json -o bandit-report.json || true
+RUN safety check --json --output safety-report.json || true
+
+# Run tests with coverage
+RUN pytest tests/ --cov=openpypi --cov-report=xml --cov-report=html
+
+# Generate test report
+CMD ["pytest", "tests/", "-v", "--cov=openpypi", "--cov-report=term-missing"]
+
+
+# Stage 6: Documentation stage
+FROM python:3.11-slim as docs
+
+WORKDIR /app
+
+# Install documentation dependencies
+RUN pip install sphinx sphinx-rtd-theme myst-parser
+
+# Copy source and docs
+COPY src/ ./src/
+COPY docs/ ./docs/
+COPY README.md .
+
+# Build documentation
+RUN cd docs && make html
+
+# Serve documentation
+EXPOSE 8080
+CMD ["python", "-m", "http.server", "8080", "--directory", "docs/_build/html"]
+
+
+# Stage 7: Minimal runtime for production deployment
+FROM gcr.io/distroless/python3-debian11 as distroless
+
+COPY --from=production /opt/venv /opt/venv
+COPY --from=production /app /app
+
+WORKDIR /app
+
+ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONPATH=/app
+
+EXPOSE 8000
+
+# Distroless doesn't have shell, so use exec form
+ENTRYPOINT ["/opt/venv/bin/python", "-m", "uvicorn", "openpypi.api.app:app"]
+CMD ["--host", "0.0.0.0", "--port", "8000"] 

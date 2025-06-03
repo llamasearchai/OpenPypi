@@ -1,11 +1,17 @@
 """Pytest configuration and fixtures."""
 
+import os
 import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Dict
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+
+from openpypi.core.config import Config
+from openpypi.providers.openai_provider import OpenAIProvider
+from openpypi.utils.mock_data import generate_mock_projects, generate_mock_users
 
 # Add src directory to Python path
 src_dir = Path(__file__).parent.parent / "src"
@@ -14,19 +20,50 @@ sys.path.insert(0, str(src_dir))
 from openpypi.core import Config, ProjectGenerator
 
 
+@pytest.fixture(scope="session")
+def mock_env_vars():
+    """Mock environment variables for testing."""
+    env_vars = {
+        "OPENAI_API_KEY": "sk-test-key-12345",
+        "PYPI_API_TOKEN": "pypi-test-token-12345",
+        "SECRET_KEY": "test-secret-key",
+        "DATABASE_URL": "sqlite:///test.db",
+        "REDIS_URL": "redis://localhost:6379/1",
+    }
+
+    with patch.dict(os.environ, env_vars):
+        yield env_vars
+
+
+@pytest.fixture
+def mock_openai_client():
+    """Mock OpenAI client for testing."""
+    with patch("openai.OpenAI") as mock_client:
+        # Mock completion response
+        mock_response = Mock()
+        mock_response.choices = [Mock()]
+        mock_response.choices[0].message.content = "Generated code content"
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.usage.prompt_tokens = 100
+        mock_response.usage.completion_tokens = 200
+        mock_response.usage.total_tokens = 300
+        mock_response.model = "gpt-3.5-turbo"
+
+        mock_client.return_value.chat.completions.create.return_value = mock_response
+        yield mock_client
+
+
 @pytest.fixture
 def sample_config() -> Config:
     """Provide sample configuration for tests."""
     return Config(
-        project_name="test_project",
-        package_name="test_package",
+        project_name="test-project",
+        package_name="test_project",
         author="Test Author",
         email="test@example.com",
-        description="A test package",
-        use_fastapi=True,
         use_openai=True,
+        use_fastapi=True,
         use_docker=True,
-        create_tests=True,
     )
 
 
@@ -120,3 +157,22 @@ def mock_openai_response():
         "model": "gpt-3.5-turbo",
         "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
     }
+
+
+@pytest.fixture
+def mock_users():
+    """Generate mock users for testing."""
+    return generate_mock_users(3)
+
+
+@pytest.fixture
+def mock_projects():
+    """Generate mock projects for testing."""
+    return generate_mock_projects(5)
+
+
+@pytest.fixture
+def openai_provider(mock_env_vars, mock_openai_client):
+    """OpenAI provider instance for testing."""
+    config = {"api_key": "sk-test-key-12345"}
+    return OpenAIProvider(config)

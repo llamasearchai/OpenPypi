@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/core/context.py
+# hypothesis_version: 6.133.2
+
+['0.1.0', '>=3.8', 'Context', 'MIT', 'OpenPypi User', 'PackageContext', '_', 'a', 'ai_package', 'an', 'and', 'author', 'but', 'create_tests', 'created_at', 'description', 'docs', 'email', 'for', 'library', 'or', 'output_dir', 'package_name', 'project_config', 'project_name', 'r', 'src', 'test_framework', 'tests', 'the', 'to', 'use_docker', 'use_fastapi', 'use_git', 'user@example.com', 'version', 'w', 'with']

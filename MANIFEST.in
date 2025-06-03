@@ -1,0 +1,77 @@
+# Include documentation and configuration files
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include pyproject.toml
+
+# Include package source files
+recursive-include src/openpypi *.py
+recursive-include src/openpypi/templates *
+recursive-include src/openpypi/data *
+
+# Include type stubs
+recursive-include src/openpypi *.pyi
+
+# Include data files
+recursive-include src/openpypi *.json
+recursive-include src/openpypi *.yaml
+recursive-include src/openpypi *.yml
+recursive-include src/openpypi *.toml
+
+# Exclude build artifacts and caches
+exclude .gitignore
+global-exclude __pycache__/*
+global-exclude *.py[cod]
+global-exclude *$py.class
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude Thumbs.db
+
+# Exclude development files
+exclude .pre-commit-config.yaml
+exclude .github/*
+exclude scripts/*
+exclude tests/*
+exclude docs/*
+exclude examples/*
+exclude projects/*
+exclude simple_app/*
+exclude logs/*
+
+# Exclude virtual environment
+exclude venv/*
+exclude env/*
+exclude .env
+exclude .venv/*
+
+# Exclude IDE files
+exclude .vscode/*
+exclude .idea/*
+exclude *.sublime-*
+
+# Exclude build and distribution
+exclude build/*
+exclude dist/*
+exclude *.egg-info/*
+
+# Exclude coverage and test artifacts
+exclude .coverage
+exclude coverage.xml
+exclude htmlcov/*
+exclude .pytest_cache/*
+exclude .mypy_cache/*
+exclude .tox/*
+
+# Exclude Docker files
+exclude Dockerfile
+exclude docker-compose.yml
+exclude .dockerignore
+
+# Exclude other artifacts
+exclude bandit-report.json
+exclude safety-report.json
+exclude master_solution.log
+exclude coverage.json
+exclude METAPROMPT_ANALYSIS.md
+exclude main.txt 

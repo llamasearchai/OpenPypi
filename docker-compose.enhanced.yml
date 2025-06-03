@@ -1,0 +1,368 @@
+version: '3.9'
+
+services:
+  # Main OpenPypi API service
+  openpypi-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+      target: production
+    image: openpypi-api:latest
+    container_name: openpypi_api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - OPENPYPI_LOG_LEVEL=info
+      - OPENPYPI_WORKERS=4
+      - OPENPYPI_PORT=8000
+      - OPENPYPI_HOST=0.0.0.0
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://openpypi:openpypi@postgres:5432/openpypi
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev_secret_key_change_in_production}
+      - API_SECRET_KEY=${API_SECRET_KEY:-dev_api_secret_change_in_production}
+    volumes:
+      - openpypi_data:/app/data
+      - openpypi_logs:/app/logs
+      - openpypi_config:/app/config
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openpypi.rule=Host(`api.openpypi.local`)"
+      - "traefik.http.services.openpypi.loadbalancer.server.port=8000"
+
+  # Development service with hot reload
+  openpypi-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+      target: development
+    image: openpypi-dev:latest
+    container_name: openpypi_dev
+    ports:
+      - "8001:8000"
+      - "5678:5678"  # Debug port for debugpy
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - OPENPYPI_LOG_LEVEL=debug
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://openpypi:openpypi@postgres:5432/openpypi_dev
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET_KEY=dev_secret_key_for_development_only
+      - API_SECRET_KEY=dev_api_secret_for_development_only
+    volumes:
+      - .:/app
+      - openpypi_dev_data:/app/data
+      - openpypi_dev_logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - openpypi-network
+    profiles:
+      - dev
+
+  # Redis for caching, sessions, and task queue
+  redis:
+    image: redis:7-alpine
+    container_name: openpypi_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+
+  # PostgreSQL for persistent data
+  postgres:
+    image: postgres:15-alpine
+    container_name: openpypi_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=openpypi
+      - POSTGRES_USER=openpypi
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-openpypi}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openpypi -d openpypi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+
+  # Background task worker (Celery)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+      target: production
+    image: openpypi-worker:latest
+    container_name: openpypi_worker
+    command: ["worker"]
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - OPENPYPI_LOG_LEVEL=info
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://openpypi:openpypi@postgres:5432/openpypi
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - openpypi_data:/app/data
+      - openpypi_logs:/app/logs
+      - openpypi_config:/app/config
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - worker
+
+  # Traefik reverse proxy and load balancer
+  traefik:
+    image: traefik:v2.10
+    container_name: openpypi_traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@openpypi.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - production
+
+  # Nginx for static file serving and additional load balancing
+  nginx:
+    image: nginx:alpine
+    container_name: openpypi_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+      - openpypi_static:/usr/share/nginx/html/static
+    depends_on:
+      - openpypi-api
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - production
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: openpypi_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - monitoring
+
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: openpypi_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana:/etc/grafana/provisioning:ro
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - monitoring
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: openpypi_jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger collector
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - monitoring
+
+  # ElasticSearch for log aggregation
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.7.1
+    container_name: openpypi_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - logging
+
+  # Kibana for log visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.7.1
+    container_name: openpypi_kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - logging
+
+  # MinIO for S3-compatible object storage
+  minio:
+    image: minio/minio:latest
+    container_name: openpypi_minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"  # MinIO API
+      - "9001:9001"  # MinIO Console
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    networks:
+      - openpypi-network
+    profiles:
+      - storage
+
+  # Testing service for running integration tests
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+      target: development
+    image: openpypi-test:latest
+    container_name: openpypi_test
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - OPENPYPI_LOG_LEVEL=debug
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://openpypi:openpypi@postgres:5432/openpypi_test
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: ["python", "-m", "pytest", "tests/", "-v", "--cov=src/openpypi"]
+    networks:
+      - openpypi-network
+    profiles:
+      - test
+
+volumes:
+  openpypi_data:
+    driver: local
+  openpypi_logs:
+    driver: local
+  openpypi_config:
+    driver: local
+  openpypi_static:
+    driver: local
+  openpypi_dev_data:
+    driver: local
+  openpypi_dev_logs:
+    driver: local
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  traefik_letsencrypt:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  openpypi-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

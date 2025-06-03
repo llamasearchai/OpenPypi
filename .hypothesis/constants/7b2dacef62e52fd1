@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/generation.py
+# hypothesis_version: 6.133.2
+
+['directories_created', 'files_created', 'generation_results', 'output_dir', 'project_path', 'success', 'validated_config', 'validation', 'validation_result']

@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/auth.py
+# hypothesis_version: 6.133.2
+
+['...', '/register', '/token', '/users/me', '/validate-key', '/validate-token', 'API User', 'API key is valid.', 'Bearer', 'Get Access Token', 'Register New User', 'Token is valid.', 'Validate API Key', 'Validate API Token', 'WWW-Authenticate', 'access_token', 'api@example.com', 'api_key', 'authenticated_user', 'bearer', 'email', 'full_name', 'status', 'sub', 'token_type', 'username', 'valid']

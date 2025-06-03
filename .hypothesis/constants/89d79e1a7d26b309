@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/core/security.py
+# hypothesis_version: 6.133.2
+
+['+00:00', '-', '.', 'API_SECRET_KEY', 'Auth Test User', 'HS256', 'Test User', 'Z', '_', 'authtestpassword', 'authtestuser', 'exp', 'testpassword', 'testuser', 'testuser@example.com', 'utf-8']

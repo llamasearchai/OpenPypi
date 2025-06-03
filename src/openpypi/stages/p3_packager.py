@@ -17,107 +17,105 @@ logger = get_logger(__name__)
 class PackagerStage(BaseStage):
     """
     Stage 3: Package Implementation
-    
+
     This stage generates the actual Python code for the package,
     including all modules, classes, functions, and implementation details.
     """
-    
+
     async def execute(self, context: PackageContext) -> None:
         """Execute the package implementation stage."""
         self.log_stage_start()
-        
+
         try:
             # Get previous stage outputs
             concept_data = context.get_stage_output("p1_concept") or {}
             architecture_data = context.get_stage_output("p2_architecture") or {}
-            
+
             # Generate implementation for each module
             implementation_data = await self._generate_implementation(
                 context, concept_data, architecture_data
             )
-            
+
             if await self.validate_output(implementation_data):
                 # Write code files
                 await self._write_code_files(context, implementation_data)
-                
+
                 # Generate configuration files
                 await self._generate_config_files(context, architecture_data)
-                
+
                 # Store stage output
                 context.set_stage_output("p3_implementation", implementation_data)
-                
+
                 self.log_stage_end()
             else:
                 raise ValueError("Invalid implementation output generated")
-                
+
         except Exception as e:
             self.log_stage_error(e)
             raise
-    
+
     async def _generate_implementation(
         self,
         context: PackageContext,
         concept_data: Dict[str, Any],
-        architecture_data: Dict[str, Any]
+        architecture_data: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Generate implementation for all modules."""
         implementation_data = {"modules": {}}
-        
+
         # Get package structure
         package_structure = architecture_data.get("package_structure", {})
         api_design = architecture_data.get("api_design", {})
-        
+
         # Generate code for each module
         for module_path, module_info in self._extract_python_files(package_structure):
-            if module_path.endswith('.py'):
+            if module_path.endswith(".py"):
                 logger.info(f"Generating code for {module_path}")
-                
+
                 module_code = await self._generate_module_code(
                     context, module_path, module_info, concept_data, api_design
                 )
-                
+
                 implementation_data["modules"][module_path] = module_code
-        
+
         return implementation_data
-    
+
     def _extract_python_files(self, structure: Dict[str, Any], prefix: str = "") -> List[tuple]:
         """Extract Python files from package structure."""
         files = []
-        
+
         for name, content in structure.items():
             full_path = f"{prefix}/{name}" if prefix else name
-            
+
             if isinstance(content, dict):
                 files.extend(self._extract_python_files(content, full_path))
-            elif name.endswith('.py'):
+            elif name.endswith(".py"):
                 files.append((full_path, content))
-        
+
         return files
-    
+
     async def _generate_module_code(
         self,
         context: PackageContext,
         module_path: str,
         module_info: str,
         concept_data: Dict[str, Any],
-        api_design: Dict[str, Any]
+        api_design: Dict[str, Any],
     ) -> str:
         """Generate code for a specific module."""
         system_prompt = self.get_system_prompt()
         user_prompt = self._get_module_prompt(
             context, module_path, module_info, concept_data, api_design
         )
-        
+
         response = await self.provider.generate_response(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            temperature=0.5
+            prompt=user_prompt, system_prompt=system_prompt, temperature=0.5
         )
-        
+
         # Extract code from response
         code = self._extract_code_from_response(response["content"])
         return code
-    
+
     def get_system_prompt(self) -> str:
         """Get the system prompt for code generation."""
         return """You are an expert Python developer who writes production-quality code. You excel at:
@@ -143,24 +141,24 @@ class PackagerStage(BaseStage):
 
         Respond with only the Python code, properly formatted and commented.
         """
-    
+
     def _get_module_prompt(
         self,
         context: PackageContext,
         module_path: str,
         module_info: str,
         concept_data: Dict[str, Any],
-        api_design: Dict[str, Any]
+        api_design: Dict[str, Any],
     ) -> str:
         """Get the user prompt for module code generation."""
-        
+
         # Determine module type and purpose
         module_name = Path(module_path).stem
         is_init = module_name == "__init__"
         is_main = module_name in ["main", "core"]
         is_cli = "cli" in module_path
         is_test = "test" in module_path
-        
+
         base_prompt = f"""Generate Python code for the module: {module_path}
 
         **Package Context:**
@@ -179,9 +177,11 @@ class PackagerStage(BaseStage):
         - Public Classes: {len(api_design.get('public_classes', []))} classes
         - Public Functions: {len(api_design.get('public_functions', []))} functions
         """
-        
+
         if is_init:
-            return base_prompt + """
+            return (
+                base_prompt
+                + """
         
         **Requirements for __init__.py:**
         1. Import and expose the main public API
@@ -205,9 +205,12 @@ class PackagerStage(BaseStage):
         __all__ = ["MainClass", "main_function", "CustomError"]
         
         """
-        
+            )
+
         elif is_main or module_name == "core":
-            return base_prompt + f"""
+            return (
+                base_prompt
+                + f"""
         
         **Requirements for core module:**
         1. Implement the main functionality described in the concept
@@ -223,9 +226,12 @@ class PackagerStage(BaseStage):
         **Functions to implement:**
         {chr(10).join(f"- {func['name']}: {func['purpose']}" for func in api_design.get('public_functions', []))}
         """
-        
+            )
+
         elif is_cli:
-            return base_prompt + """
+            return (
+                base_prompt
+                + """
         
         **Requirements for CLI module:**
         1. Use Click or argparse for command-line interface
@@ -252,9 +258,12 @@ class PackagerStage(BaseStage):
             pass
         
         """
-        
+            )
+
         elif is_test:
-            return base_prompt + """
+            return (
+                base_prompt
+                + """
         
         **Requirements for test module:**
         1. Use pytest framework
@@ -279,9 +288,12 @@ class PackagerStage(BaseStage):
                 pass
         
         """
-        
+            )
+
         elif module_name == "exceptions":
-            return base_prompt + """
+            return (
+                base_prompt
+                + """
         
         **Requirements for exceptions module:**
         1. Define custom exception hierarchy
@@ -301,9 +313,12 @@ class PackagerStage(BaseStage):
             pass
         
         """
-        
+            )
+
         elif module_name in ["utils", "helpers"]:
-            return base_prompt + """
+            return (
+                base_prompt
+                + """
         
         **Requirements for utilities module:**
         1. Implement helper functions used across the package
@@ -313,9 +328,12 @@ class PackagerStage(BaseStage):
         5. Include comprehensive error handling
         6. Add type hints and docstrings
         """
-        
+            )
+
         else:
-            return base_prompt + f"""
+            return (
+                base_prompt
+                + f"""
         
         **Requirements for {module_name} module:**
         1. Implement functionality specific to this module
@@ -325,55 +343,59 @@ class PackagerStage(BaseStage):
         5. Add comprehensive docstrings
         6. Ensure compatibility with the rest of the package
         """
-        
-        return base_prompt + """
+            )
+
+        return (
+            base_prompt
+            + """
         
         Please generate complete, production-ready Python code for this module.
         Include all necessary imports, proper error handling, logging, type hints, and docstrings.
         """
-    
+        )
+
     def _extract_code_from_response(self, response_content: str) -> str:
         """Extract Python code from AI response."""
         # Look for code blocks
-        code_block_pattern = r'\n(.*?)\n'
+        code_block_pattern = r"\n(.*?)\n"
         matches = re.findall(code_block_pattern, response_content, re.DOTALL)
-        
+
         if matches:
             return matches[0].strip()
-        
+
         # Look for code without explicit blocks
-        lines = response_content.split('\n')
+        lines = response_content.split("\n")
         code_lines = []
         in_code = False
-        
+
         for line in lines:
-            if line.strip().startswith('```'):
+            if line.strip().startswith("```"):
                 in_code = not in_code
                 continue
-            
-            if in_code or line.startswith('    ') or line.startswith('\t'):
+
+            if in_code or line.startswith("    ") or line.startswith("\t"):
                 code_lines.append(line)
-            elif line.strip() and not any(word in line.lower() for word in ['here', 'this', 'the', 'above']):
+            elif line.strip() and not any(
+                word in line.lower() for word in ["here", "this", "the", "above"]
+            ):
                 code_lines.append(line)
-        
+
         if code_lines:
-            return '\n'.join(code_lines).strip()
-        
+            return "\n".join(code_lines).strip()
+
         # Fallback: return the entire response
         return response_content.strip()
-    
+
     async def _write_code_files(
-        self, 
-        context: PackageContext, 
-        implementation_data: Dict[str, Any]
+        self, context: PackageContext, implementation_data: Dict[str, Any]
     ) -> None:
         """Write generated code to files."""
         modules = implementation_data.get("modules", {})
-        
+
         for module_path, code in modules.items():
             file_path = context.output_dir / module_path
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Add file header
             header = f'''"""
 {module_path}
@@ -383,48 +405,44 @@ Package: {context.package_name}
 """
 
 '''
-            
+
             # Write code with header
             full_code = header + code
-            file_path.write_text(full_code, encoding='utf-8')
-            
+            file_path.write_text(full_code, encoding="utf-8")
+
             logger.info(f"Generated code file: {file_path}")
-    
+
     async def _generate_config_files(
-        self, 
-        context: PackageContext, 
-        architecture_data: Dict[str, Any]
+        self, context: PackageContext, architecture_data: Dict[str, Any]
     ) -> None:
         """Generate configuration files (pyproject.toml, setup.py, etc.)."""
-        
+
         # Generate pyproject.toml
         await self._generate_pyproject_toml(context, architecture_data)
-        
+
         # Generate setup.py for backward compatibility
         await self._generate_setup_py(context, architecture_data)
-        
+
         # Generate requirements files
         await self._generate_requirements_files(context, architecture_data)
-        
+
         # Generate other config files
         await self._generate_other_configs(context, architecture_data)
-    
+
     async def _generate_pyproject_toml(
-        self, 
-        context: PackageContext, 
-        architecture_data: Dict[str, Any]
+        self, context: PackageContext, architecture_data: Dict[str, Any]
     ) -> None:
         """Generate pyproject.toml file."""
         dependencies = architecture_data.get("dependencies", {})
         core_deps = dependencies.get("core", [])
         optional_deps = dependencies.get("optional", {})
-        
+
         # Get entry points
         api_design = architecture_data.get("api_design", {})
         entry_points = api_design.get("entry_points", {})
         console_scripts = entry_points.get("console_scripts", [])
-        
-        pyproject_content = f'''[build-system]
+
+        pyproject_content = f"""[build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
@@ -459,19 +477,19 @@ Repository = "https://github.com/{context.author.lower().replace(' ', '')}/{cont
 Issues = "https://github.com/{context.author.lower().replace(' ', '')}/{context.package_name}/issues"
 
 [project.optional-dependencies]
-'''
-        
+"""
+
         # Add optional dependencies
         for category, deps in optional_deps.items():
-            pyproject_content += f'{category} = {deps}\n'
-        
+            pyproject_content += f"{category} = {deps}\n"
+
         # Add console scripts if any
         if console_scripts:
-            pyproject_content += '\n[project.scripts]\n'
+            pyproject_content += "\n[project.scripts]\n"
             for script in console_scripts:
-                pyproject_content += f'{script}\n'
-        
-        pyproject_content += '''
+                pyproject_content += f"{script}\n"
+
+        pyproject_content += """
 [tool.setuptools.packages.find]
 where = ["src"]
 
@@ -497,16 +515,14 @@ python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-'''
-        
+"""
+
         pyproject_path = context.output_dir / "pyproject.toml"
         pyproject_path.write_text(pyproject_content)
         logger.info(f"Generated pyproject.toml: {pyproject_path}")
-    
+
     async def _generate_setup_py(
-        self, 
-        context: PackageContext, 
-        architecture_data: Dict[str, Any]
+        self, context: PackageContext, architecture_data: Dict[str, Any]
     ) -> None:
         """Generate setup.py for backward compatibility."""
         setup_content = f'''"""Setup script for {context.package_name}."""
@@ -533,27 +549,25 @@ setup(
     ],
 )
 '''
-        
+
         setup_path = context.output_dir / "setup.py"
         setup_path.write_text(setup_content)
         logger.info(f"Generated setup.py: {setup_path}")
-    
+
     async def _generate_requirements_files(
-        self, 
-        context: PackageContext, 
-        architecture_data: Dict[str, Any]
+        self, context: PackageContext, architecture_data: Dict[str, Any]
     ) -> None:
         """Generate requirements.txt and requirements-dev.txt files."""
         dependencies = architecture_data.get("dependencies", {})
-        
+
         # requirements.txt
         core_deps = dependencies.get("core", [])
         if core_deps:
-            req_content = '\n'.join(core_deps) + '\n'
+            req_content = "\n".join(core_deps) + "\n"
             req_path = context.output_dir / "requirements.txt"
             req_path.write_text(req_content)
             logger.info(f"Generated requirements.txt: {req_path}")
-        
+
         # requirements-dev.txt
         dev_deps = dependencies.get("optional", {}).get("dev", [])
         default_dev_deps = [
@@ -562,24 +576,22 @@ setup(
             "black>=22.0.0",
             "isort>=5.10.0",
             "flake8>=5.0.0",
-            "mypy>=1.0.0"
+            "mypy>=1.0.0",
         ]
-        
+
         all_dev_deps = list(set(dev_deps + default_dev_deps))
-        dev_req_content = '\n'.join(all_dev_deps) + '\n'
+        dev_req_content = "\n".join(all_dev_deps) + "\n"
         dev_req_path = context.output_dir / "requirements-dev.txt"
         dev_req_path.write_text(dev_req_content)
         logger.info(f"Generated requirements-dev.txt: {dev_req_path}")
-    
+
     async def _generate_other_configs(
-        self, 
-        context: PackageContext, 
-        architecture_data: Dict[str, Any]
+        self, context: PackageContext, architecture_data: Dict[str, Any]
     ) -> None:
         """Generate other configuration files."""
-        
+
         # .gitignore
-        gitignore_content = '''# Byte-compiled / optimized / DLL files
+        gitignore_content = """# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -588,14 +600,14 @@ __pycache__/
 *.so
 
 # Distribution / packaging
-'''
-        
+"""
+
         gitignore_path = context.output_dir / ".gitignore"
         gitignore_path.write_text(gitignore_content)
         logger.info(f"Generated .gitignore: {gitignore_path}")
-        
+
         # MANIFEST.in
-        manifest_content = '''include README.md
+        manifest_content = """include README.md
 include LICENSE
 include requirements*.txt
 recursive-include src *.py
@@ -603,33 +615,33 @@ recursive-include tests *.py
 recursive-include docs *.rst *.md *.txt *.py
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
-'''
-        
+"""
+
         manifest_path = context.output_dir / "MANIFEST.in"
         manifest_path.write_text(manifest_content)
         logger.info(f"Generated MANIFEST.in: {manifest_path}")
-    
+
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate the implementation output."""
         modules = output.get("modules", {})
-        
+
         if not modules:
             logger.error("No modules generated")
             return False
-        
+
         # Check for required files
         required_files = ["__init__.py"]
         for required_file in required_files:
             if not any(required_file in path for path in modules.keys()):
                 logger.error(f"Missing required file: {required_file}")
                 return False
-        
+
         # Validate that code is not empty
         for module_path, code in modules.items():
             if not code or len(code.strip()) < 10:
                 logger.error(f"Generated code for {module_path} is too short or empty")
                 return False
-        
+
         return True
 
     def get_user_prompt(self, context: PackageContext) -> str:

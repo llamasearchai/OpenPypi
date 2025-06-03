@@ -1,2 +1,5 @@
 [console_scripts]
 openpypi = openpypi.cli:main
+
+[openpypi.providers]
+openai = openpypi.providers.openai_provider:OpenAIProvider

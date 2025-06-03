@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openpypi
+  labels:
+    name: openpypi
+    app.kubernetes.io/name: openpypi
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: namespace
+    app.kubernetes.io/managed-by: kubectl 

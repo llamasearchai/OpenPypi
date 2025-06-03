@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/monitoring.py
+# hypothesis_version: 6.133.2
+
+[b'health check', 0.0, 100, 1000, 1024, '/', '/health/live', '/health/ready', '/info', '/metrics', '/metrics/application', '/metrics/system', '0.1.0', 'No models available', 'OpenPypi API', 'Rate limiting', 'Real-time monitoring', 'Request tracing', 'Security middleware', 'active_requests', 'alive', 'app_initialized', 'architecture', 'bytes_recv', 'bytes_sent', 'checks', 'degraded', 'description', 'development', 'environment', 'errors_total', 'features', 'filesystem', 'getloadavg', 'healthy', 'hostname', 'metrics', 'name', 'not_configured', 'not_ready', 'openai', 'packets_recv', 'packets_sent', 'pid', 'platform', 'python_version', 'ready', 'requests_total', 'response_times', 'started_at', 'startup_complete', 'startup_time', 'status', 'timestamp', 'unhealthy', 'version']

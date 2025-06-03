@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/generation.py
+# hypothesis_version: 6.133.2
+
+[100, '-', './generated_projects', '/async', '/status/{task_id}', '/sync', '0.1.0', 'FAILURE', 'Get Task Status', 'STARTED', 'SUCCESS', '_', 'completed', 'created_at', 'directories_created', 'error', 'error_message', 'failed', 'files_created', 'output_directory', 'package_name', 'pending', 'pipeline_results', 'project_name', 'project_summary', 'pytest', 'result', 'running', 'status', 'success', 'task_id', 'tasks', 'updated_at', 'warnings']

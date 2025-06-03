@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/providers/base.py
+# hypothesis_version: 6.133.2
+
+[300, '^[a-z0-9_]+$', 'audit_logging', 'encrypt_secrets', 'forbid', 'validate_connection']

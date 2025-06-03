@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "trivy-fs",
+          "version": "Version: 0.63.0"
+        }
+      },
+      "results": [
+        {
+          "Target": "Python",
+          "Class": "lang-pkgs",
+          "Type": "python-pkg"
+        },
+        {
+          "Target": "venv/lib/python3.11/site-packages/jupyterlab/staging/yarn.lock",
+          "Class": "lang-pkgs",
+          "Type": "yarn"
+        },
+        {
+          "Target": "venv/lib/python3.11/site-packages/jupyterlab/tests/mock_packages/test-hyphens-underscore/yarn.lock",
+          "Class": "lang-pkgs",
+          "Type": "yarn",
+          "Vulnerabilities": [
+            {
+              "VulnerabilityID": "CVE-2024-37890",
+              "PkgID": "ws@8.16.0",
+              "PkgName": "ws",
+              "PkgIdentifier": {
+                "PURL": "pkg:npm/ws@8.16.0",
+                "UID": "c0f569077f28db4c"
+              },
+              "InstalledVersion": "8.16.0",
+              "FixedVersion": "5.2.4, 6.2.3, 7.5.10, 8.17.1",
+              "Status": "fixed",
+              "Layer": {},
+              "SeveritySource": "ghsa",
+              "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-37890",
+              "DataSource": {
+                "ID": "ghsa",
+                "Name": "GitHub Security Advisory npm",
+                "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+              },
+              "Title": "nodejs-ws: denial of service when handling a request with many HTTP headers",
+              "Description": "ws is an open source WebSocket client and server for Node.js. A request with a number of headers exceeding theserver.maxHeadersCount threshold could be used to crash a ws server. The vulnerability was fixed in ws@8.17.1 (e55e510) and backported to ws@7.5.10 (22c2876), ws@6.2.3 (eeb76d3), and ws@5.2.4 (4abd8f6). In vulnerable versions of ws, the issue can be mitigated in the following ways: 1. Reduce the maximum allowed length of the request headers using the --max-http-header-size=size and/or the maxHeaderSize options so that no more headers than the server.maxHeadersCount limit can be sent. 2. Set server.maxHeadersCount to 0 so that no limit is applied.",
+              "Severity": "HIGH",
+              "CweIDs": [
+                "CWE-476"
+              ],
+              "VendorSeverity": {
+                "cbl-mariner": 3,
+                "ghsa": 3,
+                "redhat": 2
+              },
+              "CVSS": {
+                "ghsa": {
+                  "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+                  "V3Score": 7.5
+                },
+                "redhat": {
+                  "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H",
+                  "V3Score": 5.9
+                }
+              },
+              "References": [
+                "https://access.redhat.com/security/cve/CVE-2024-37890",
+                "https://github.com/websockets/ws",
+                "https://github.com/websockets/ws/commit/22c28763234aa75a7e1b76f5c01c181260d7917f",
+                "https://github.com/websockets/ws/commit/4abd8f6de4b0b65ef80b3ff081989479ed93377e",
+                "https://github.com/websockets/ws/commit/e55e5106f10fcbaac37cfa89759e4cc0d073a52c",
+                "https://github.com/websockets/ws/commit/eeb76d313e2a00dd5247ca3597bba7877d064a63",
+                "https://github.com/websockets/ws/issues/2230",
+                "https://github.com/websockets/ws/pull/2231",
+                "https://github.com/websockets/ws/security/advisories/GHSA-3h5v-q93c-6h6q",
+                "https://nodejs.org/api/http.html#servermaxheaderscount",
+                "https://nvd.nist.gov/vuln/detail/CVE-2024-37890",
+                "https://www.cve.org/CVERecord?id=CVE-2024-37890"
+              ],
+              "PublishedDate": "2024-06-17T20:15:13.203Z",
+              "LastModifiedDate": "2024-11-21T09:24:28.81Z"
+            }
+          ]
+        },
+        {
+          "Target": "venv/lib/python3.11/site-packages/jupyterlab/tests/mock_packages/test_no_hyphens/yarn.lock",
+          "Class": "lang-pkgs",
+          "Type": "yarn",
+          "Vulnerabilities": [
+            {
+              "VulnerabilityID": "CVE-2024-37890",
+              "PkgID": "ws@8.16.0",
+              "PkgName": "ws",
+              "PkgIdentifier": {
+                "PURL": "pkg:npm/ws@8.16.0",
+                "UID": "76c1b61546be9420"
+              },
+              "InstalledVersion": "8.16.0",
+              "FixedVersion": "5.2.4, 6.2.3, 7.5.10, 8.17.1",
+              "Status": "fixed",
+              "Layer": {},
+              "SeveritySource": "ghsa",
+              "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-37890",
+              "DataSource": {
+                "ID": "ghsa",
+                "Name": "GitHub Security Advisory npm",
+                "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+              },
+              "Title": "nodejs-ws: denial of service when handling a request with many HTTP headers",
+              "Description": "ws is an open source WebSocket client and server for Node.js. A request with a number of headers exceeding theserver.maxHeadersCount threshold could be used to crash a ws server. The vulnerability was fixed in ws@8.17.1 (e55e510) and backported to ws@7.5.10 (22c2876), ws@6.2.3 (eeb76d3), and ws@5.2.4 (4abd8f6). In vulnerable versions of ws, the issue can be mitigated in the following ways: 1. Reduce the maximum allowed length of the request headers using the --max-http-header-size=size and/or the maxHeaderSize options so that no more headers than the server.maxHeadersCount limit can be sent. 2. Set server.maxHeadersCount to 0 so that no limit is applied.",
+              "Severity": "HIGH",
+              "CweIDs": [
+                "CWE-476"
+              ],
+              "VendorSeverity": {
+                "cbl-mariner": 3,
+                "ghsa": 3,
+                "redhat": 2
+              },
+              "CVSS": {
+                "ghsa": {
+                  "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+                  "V3Score": 7.5
+                },
+                "redhat": {
+                  "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H",
+                  "V3Score": 5.9
+                }
+              },
+              "References": [
+                "https://access.redhat.com/security/cve/CVE-2024-37890",
+                "https://github.com/websockets/ws",
+                "https://github.com/websockets/ws/commit/22c28763234aa75a7e1b76f5c01c181260d7917f",
+                "https://github.com/websockets/ws/commit/4abd8f6de4b0b65ef80b3ff081989479ed93377e",
+                "https://github.com/websockets/ws/commit/e55e5106f10fcbaac37cfa89759e4cc0d073a52c",
+                "https://github.com/websockets/ws/commit/eeb76d313e2a00dd5247ca3597bba7877d064a63",
+                "https://github.com/websockets/ws/issues/2230",
+                "https://github.com/websockets/ws/pull/2231",
+                "https://github.com/websockets/ws/security/advisories/GHSA-3h5v-q93c-6h6q",
+                "https://nodejs.org/api/http.html#servermaxheaderscount",
+                "https://nvd.nist.gov/vuln/detail/CVE-2024-37890",
+                "https://www.cve.org/CVERecord?id=CVE-2024-37890"
+              ],
+              "PublishedDate": "2024-06-17T20:15:13.203Z",
+              "LastModifiedDate": "2024-11-21T09:24:28.81Z"
+            }
+          ]
+        },
+        {
+          "Target": ".env",
+          "Class": "secret",
+          "Secrets": [
+            {
+              "RuleID": "pypi-upload-token",
+              "Category": "PyPI",
+              "Severity": "HIGH",
+              "Title": "PyPI upload token",
+              "StartLine": 1,
+              "EndLine": 1,
+              "Code": {
+                "Lines": [
+                  {
+                    "Number": 1,
+                    "Content": "PYPI_API_KEY=***********************************************************************************************************************************************************************************",
+                    "IsCause": true,
+                    "Annotation": "",
+                    "Truncated": false,
+                    "Highlighted": "PYPI_API_KEY=***********************************************************************************************************************************************************************************",
+                    "FirstCause": true,
+                    "LastCause": true
+                  }
+                ]
+              },
+              "Match": "PYPI_API_KEY=***********************************************************************************************************************************************************************************",
+              "Layer": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "docker-security",
+          "version": "1.0.0"
+        }
+      },
+      "results": [
+        {
+          "message": {
+            "text": "\u26a0 No Docker security options detected\n\u26a0 User namespaces not enabled"
+          },
+          "level": "info"
+        }
+      ]
+    }
+  ]
+}

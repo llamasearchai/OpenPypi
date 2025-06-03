@@ -16,101 +16,95 @@ logger = get_logger(__name__)
 class DocumentarianStage(BaseStage):
     """
     Stage 5: Documentation
-    
+
     This stage generates comprehensive documentation including README,
     API documentation, user guides, and examples.
     """
-    
+
     async def execute(self, context: PackageContext) -> None:
         """Execute the documentation stage."""
         self.log_stage_start()
-        
+
         try:
             # Get previous stage outputs
             concept_data = context.get_stage_output("p1_concept") or {}
             architecture_data = context.get_stage_output("p2_architecture") or {}
             implementation_data = context.get_stage_output("p3_implementation") or {}
-            
+
             # Generate documentation
             docs_data = await self._generate_documentation(
                 context, concept_data, architecture_data, implementation_data
             )
-            
+
             if await self.validate_output(docs_data):
                 # Write documentation files
                 await self._write_documentation_files(context, docs_data)
-                
+
                 # Generate Sphinx configuration
                 await self._generate_sphinx_config(context, docs_data)
-                
+
                 # Generate examples
                 await self._generate_examples(context, concept_data)
-                
+
                 # Store stage output
                 context.set_stage_output("p5_documentation", docs_data)
-                
+
                 self.log_stage_end()
             else:
                 raise ValueError("Invalid documentation output generated")
-                
+
         except Exception as e:
             self.log_stage_error(e)
             raise
-    
+
     async def _generate_documentation(
         self,
         context: PackageContext,
         concept_data: Dict[str, Any],
         architecture_data: Dict[str, Any],
-        implementation_data: Dict[str, Any]
+        implementation_data: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Generate all documentation content."""
         docs_data = {}
-        
+
         # Generate README
         docs_data["README.md"] = await self._generate_readme(
             context, concept_data, architecture_data
         )
-        
+
         # Generate API documentation
-        docs_data["api_docs"] = await self._generate_api_docs(
-            context, implementation_data
-        )
-        
+        docs_data["api_docs"] = await self._generate_api_docs(context, implementation_data)
+
         # Generate user guide
-        docs_data["user_guide"] = await self._generate_user_guide(
-            context, concept_data
-        )
-        
+        docs_data["user_guide"] = await self._generate_user_guide(context, concept_data)
+
         # Generate changelog
         docs_data["CHANGELOG.md"] = await self._generate_changelog(context)
-        
+
         # Generate contributing guide
         docs_data["CONTRIBUTING.md"] = await self._generate_contributing_guide(context)
-        
+
         # Generate license
         docs_data["LICENSE"] = await self._generate_license(context)
-        
+
         return docs_data
-    
+
     async def _generate_readme(
         self,
         context: PackageContext,
         concept_data: Dict[str, Any],
-        architecture_data: Dict[str, Any]
+        architecture_data: Dict[str, Any],
     ) -> str:
         """Generate README.md content."""
         system_prompt = self._get_readme_system_prompt()
         user_prompt = self._get_readme_user_prompt(context, concept_data, architecture_data)
-        
+
         response = await self.provider.generate_response(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            temperature=0.6
+            prompt=user_prompt, system_prompt=system_prompt, temperature=0.6
         )
-        
+
         return response["content"]
-    
+
     def _get_readme_system_prompt(self) -> str:
         """Get system prompt for README generation."""
         return """You are an expert technical writer who creates compelling, comprehensive README files for Python packages. You excel at:
@@ -137,18 +131,18 @@ class DocumentarianStage(BaseStage):
 
         Generate complete, production-ready README content in Markdown format.
         """
-    
+
     def _get_readme_user_prompt(
         self,
         context: PackageContext,
         concept_data: Dict[str, Any],
-        architecture_data: Dict[str, Any]
+        architecture_data: Dict[str, Any],
     ) -> str:
         """Get user prompt for README generation."""
-        features = concept_data.get('key_features', [])
-        use_cases = concept_data.get('use_cases', [])
-        api_design = architecture_data.get('api_design', {})
-        
+        features = concept_data.get("key_features", [])
+        use_cases = concept_data.get("use_cases", [])
+        api_design = architecture_data.get("api_design", {})
+
         return f"""Generate a comprehensive README.md for the Python package:
 
         **Package Information:**

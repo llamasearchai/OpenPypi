@@ -4,9 +4,10 @@ Configuration management for OpenPypi.
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 try:
     import tomllib
@@ -15,8 +16,150 @@ except ImportError:
 
 from ..utils.logger import get_logger
 from .exceptions import ConfigurationError, ValidationError
+from pydantic import BaseModel, validator, Field
 
 logger = get_logger(__name__)
+
+
+class ProjectConfig(BaseModel):
+    """Project configuration model."""
+    
+    # Core project info
+    project_name: str = Field(..., description="Project name")
+    package_name: Optional[str] = Field(None, description="Python package name")
+    description: str = Field("A Python package", description="Project description")
+    version: str = Field("0.1.0", description="Initial version")
+    
+    # Author info
+    author_name: str = Field("Your Name", description="Author name")
+    author_email: str = Field("your.email@example.com", description="Author email")
+    
+    # License and metadata
+    license_type: str = Field("MIT", description="License type")
+    python_requires: str = Field(">=3.8", description="Python version requirement")
+    
+    # Project structure
+    use_src_layout: bool = Field(True, description="Use src/ layout")
+    include_tests: bool = Field(True, description="Include test suite")
+    include_docs: bool = Field(True, description="Include documentation")
+    include_ci: bool = Field(True, description="Include CI/CD configuration")
+    include_docker: bool = Field(False, description="Include Docker configuration")
+    
+    # Dependencies
+    dependencies: List[str] = Field(default_factory=list, description="Runtime dependencies")
+    dev_dependencies: List[str] = Field(default_factory=list, description="Development dependencies")
+    
+    # OpenAI settings
+    use_ai_generation: bool = Field(False, description="Use AI for code generation")
+    ai_provider: str = Field("openai", description="AI provider to use")
+    
+    # Advanced options
+    framework: Optional[str] = Field(None, description="Web framework (fastapi, flask, etc.)")
+    database: Optional[str] = Field(None, description="Database type")
+    
+    @validator('project_name')
+    def validate_project_name(cls, v):
+        """Validate project name format."""
+        if not v:
+            raise ValueError("Project name cannot be empty")
+        
+        # Allow letters, numbers, hyphens, underscores
+        if not re.match(r'^[a-zA-Z][a-zA-Z0-9_-]*$', v):
+            raise ValueError("Project name must start with a letter and contain only letters, numbers, hyphens, and underscores")
+        
+        return v
+    
+    @validator('package_name', always=True)
+    def set_package_name(cls, v, values):
+        """Set package name based on project name if not provided."""
+        if v is not None:
+            return v
+        
+        project_name = values.get('project_name', '')
+        if not project_name:
+            return 'my_package'
+        
+        # Convert project name to valid Python package name
+        # Keep underscores, convert hyphens to underscores, ensure valid Python identifier
+        package_name = project_name.replace('-', '_').lower()
+        
+        # Ensure it's a valid Python identifier
+        if not package_name.isidentifier() or package_name.startswith('_'):
+            # If still invalid, prefix with 'pkg_'
+            package_name = f"pkg_{package_name.lstrip('_')}"
+        
+        return package_name
+    
+    @validator('author_email')
+    def validate_email(cls, v):
+        """Basic email validation."""
+        if '@' not in v or '.' not in v.split('@')[-1]:
+            raise ValueError("Invalid email format")
+        return v
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert config to dictionary."""
+        return self.dict()
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'ProjectConfig':
+        """Create config from dictionary."""
+        return cls(**data)
+    
+    def get_normalized_names(self) -> Dict[str, str]:
+        """Get normalized versions of project names."""
+        return {
+            'project_name': self.project_name,
+            'package_name': self.package_name,
+            'project_slug': self.project_name.lower().replace('_', '-'),
+            'class_name': ''.join(word.capitalize() for word in self.package_name.split('_')),
+            'module_name': self.package_name.lower(),
+        }
+
+
+def load_config(config_path: Optional[Path] = None) -> ProjectConfig:
+    """Load configuration from file or environment."""
+    if config_path and config_path.exists():
+        # TODO: Implement file loading (TOML, YAML, JSON)
+        pass
+    
+    # For now, return default config
+    return ProjectConfig(
+        project_name=os.getenv('PROJECT_NAME', 'my-project'),
+        author_name=os.getenv('AUTHOR_NAME', 'Your Name'),
+        author_email=os.getenv('AUTHOR_EMAIL', 'your.email@example.com'),
+    )
+
+
+def validate_config(config: ProjectConfig) -> Dict[str, Any]:
+    """Validate configuration and return validation results."""
+    results = {
+        'valid': True,
+        'errors': [],
+        'warnings': [],
+        'suggestions': []
+    }
+    
+    # Check for common issues
+    names = config.get_normalized_names()
+    
+    # Check if package name conflicts with common Python modules
+    common_modules = {'sys', 'os', 'json', 'time', 'datetime', 'collections', 'itertools'}
+    if names['package_name'] in common_modules:
+        results['warnings'].append(f"Package name '{names['package_name']}' conflicts with standard library module")
+    
+    # Check if project name is too short
+    if len(config.project_name) < 3:
+        results['warnings'].append("Project name is very short, consider a more descriptive name")
+    
+    # Check for placeholder values
+    placeholders = ['your name', 'your.email@example.com', 'a python package']
+    if any(placeholder in str(getattr(config, field, '')).lower() 
+           for field in ['author_name', 'author_email', 'description'] 
+           for placeholder in placeholders):
+        results['suggestions'].append("Update placeholder values for author and description")
+    
+    return results
 
 
 @dataclass
@@ -54,6 +197,12 @@ class Config:
     use_black: bool = True
     use_isort: bool = True
     line_length: int = 100
+
+    # Security/API
+    api_keys: list = field(default_factory=list)
+    fake_users_db_override: dict = field(default_factory=dict)
+    openai_api_key: Optional[str] = None
+    access_token_expire_minutes: int = 30
 
     @classmethod
     def from_file(cls, config_path: Union[str, Path]) -> "Config":
@@ -108,6 +257,7 @@ class Config:
             "OPENPYPI_USE_BLACK": "use_black",
             "OPENPYPI_USE_ISORT": "use_isort",
             "OPENPYPI_LINE_LENGTH": "line_length",
+            "OPENAI_API_KEY": "openai_api_key",
         }
 
         for env_var, config_key in env_mapping.items():
@@ -211,35 +361,49 @@ class Config:
             else:
                 logger.warning(f"Unknown configuration key: {key}")
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get configuration value by key."""
+        return getattr(self, key, default)
 
-def load_config(config_path: Optional[Union[str, Path]] = None) -> Config:
-    """
-    Load configuration from various sources.
 
-    Priority order:
-    1. Provided config file path
-    2. Environment variables
-    3. Default config file in current directory
-    4. Default configuration
-    """
-    # 1. Provided config file
-    if config_path:
-        return Config.from_file(config_path)
+class ConfigManager:
+    """Manager for configuration operations."""
 
-    # 2. Check for default config files
-    default_files = ["openpypi.toml", "openpypi.json", ".openpypi.toml", ".openpypi.json"]
-    for filename in default_files:
-        config_file = Path(filename)
-        if config_file.exists():
-            logger.info(f"Loading configuration from {config_file}")
-            return Config.from_file(config_file)
+    def __init__(self, config: Optional[Config] = None):
+        self._config = config or Config()
 
-    # 3. Environment variables
-    env_config = Config.from_env()
-    if env_config.to_dict() != Config().to_dict():  # Check if any env vars were set
-        logger.info("Loading configuration from environment variables")
-        return env_config
+    @property
+    def config(self) -> Config:
+        """Get the current configuration."""
+        return self._config
 
-    # 4. Default configuration
-    logger.info("Using default configuration")
-    return Config()
+    def load_from_file(self, config_path: Union[str, Path]) -> None:
+        """Load configuration from file."""
+        self._config = Config.from_file(config_path)
+
+    def load_from_env(self) -> None:
+        """Load configuration from environment variables."""
+        self._config = Config.from_env()
+
+    def update_config(self, **kwargs) -> None:
+        """Update configuration with new values."""
+        self._config.update(**kwargs)
+
+    def validate_config(self) -> None:
+        """Validate the current configuration."""
+        self._config.validate()
+
+    def get_setting(self, key: str, default: Any = None) -> Any:
+        """Get a configuration setting."""
+        return getattr(self._config, key, default)
+
+    def set_setting(self, key: str, value: Any) -> None:
+        """Set a configuration setting."""
+        if hasattr(self._config, key):
+            setattr(self._config, key, value)
+        else:
+            logger.warning(f"Unknown configuration key: {key}")
+
+    def get_config(self) -> Config:
+        """Get the current configuration (alias for config property)."""
+        return self._config

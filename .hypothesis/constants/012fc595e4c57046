@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/openai_integration.py
+# hypothesis_version: 6.133.2
+
+[503, '/completion', 'authentication', 'completion_text', 'content', 'description', 'model', 'rate limit', 'raw_response', 'role', 'system', 'user']

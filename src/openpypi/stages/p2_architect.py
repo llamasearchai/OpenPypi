@@ -16,51 +16,49 @@ logger = get_logger(__name__)
 class ArchitectStage(BaseStage):
     """
     Stage 2: Architecture Design
-    
+
     This stage designs the technical architecture, module structure,
     and overall organization of the Python package.
     """
-    
+
     async def execute(self, context: PackageContext) -> None:
         """Execute the architecture design stage."""
         self.log_stage_start()
-        
+
         try:
             # Get previous stage output
             concept_data = context.get_stage_output("p1_concept")
-            
+
             # Generate architecture design
             system_prompt = self.get_system_prompt()
             user_prompt = self.get_user_prompt(context)
-            
+
             response = await self.provider.generate_response(
-                prompt=user_prompt,
-                system_prompt=system_prompt,
-                temperature=0.6
+                prompt=user_prompt, system_prompt=system_prompt, temperature=0.6
             )
-            
+
             # Parse and validate response
             architecture_data = await self._parse_architecture_response(response["content"])
-            
+
             if await self.validate_output(architecture_data):
                 # Update context with architecture
                 context.dependencies.extend(architecture_data.get("dependencies", []))
                 context.dev_dependencies.extend(architecture_data.get("dev_dependencies", []))
-                
+
                 # Store stage output
                 context.set_stage_output("p2_architecture", architecture_data)
-                
+
                 # Create directory structure
                 await self._create_directory_structure(context, architecture_data)
-                
+
                 self.log_stage_end()
             else:
                 raise ValueError("Invalid architecture output generated")
-                
+
         except Exception as e:
             self.log_stage_error(e)
             raise
-    
+
     def get_system_prompt(self) -> str:
         """Get the system prompt for architecture design."""
         return """You are a senior Python software architect with expertise in designing scalable, maintainable package architectures. You excel at:
@@ -84,11 +82,11 @@ class ArchitectStage(BaseStage):
 
         Respond with detailed JSON that includes complete module structure, dependencies, and architectural decisions.
         """
-    
+
     def get_user_prompt(self, context: PackageContext) -> str:
         """Get the user prompt for architecture design."""
         concept_data = context.get_stage_output("p1_concept") or {}
-        
+
         return f"""Design a comprehensive architecture for the following Python package:
 
         **Package Name:** {context.package_name}
@@ -217,7 +215,7 @@ class ArchitectStage(BaseStage):
         6. Is testable and maintainable
         7. Follows Python naming conventions and best practices
         """
-    
+
     async def _parse_architecture_response(self, response_content: str) -> Dict[str, Any]:
         """Parse the architecture response from the AI."""
         try:
@@ -225,7 +223,7 @@ class ArchitectStage(BaseStage):
             return architecture_data
         except json.JSONDecodeError:
             logger.warning("Failed to parse JSON response, using fallback extraction")
-            
+
             # Fallback architecture
             architecture_data = {
                 "package_structure": {
@@ -233,38 +231,30 @@ class ArchitectStage(BaseStage):
                         "__init__.py": "Package initialization",
                         "core.py": "Core functionality",
                         "utils.py": "Utility functions",
-                        "exceptions.py": "Custom exceptions"
+                        "exceptions.py": "Custom exceptions",
                     },
-                    "tests/": {
-                        "test_core.py": "Core tests",
-                        "test_utils.py": "Utility tests"
-                    }
+                    "tests/": {"test_core.py": "Core tests", "test_utils.py": "Utility tests"},
                 },
-                "dependencies": {
-                    "core": [],
-                    "optional": {"dev": ["pytest>=7.0.0"]}
-                },
+                "dependencies": {"core": [], "optional": {"dev": ["pytest>=7.0.0"]}},
                 "api_design": {
                     "public_classes": [],
                     "public_functions": [],
-                    "entry_points": {"console_scripts": []}
-                }
+                    "entry_points": {"console_scripts": []},
+                },
             }
-            
+
             return architecture_data
-    
+
     async def _create_directory_structure(
-        self, 
-        context: PackageContext, 
-        architecture_data: Dict[str, Any]
+        self, context: PackageContext, architecture_data: Dict[str, Any]
     ) -> None:
         """Create the directory structure based on architecture design."""
         package_structure = architecture_data.get("package_structure", {})
-        
+
         def create_structure(base_path: Path, structure: Dict[str, Any]) -> None:
             for name, content in structure.items():
                 path = base_path / name
-                
+
                 if isinstance(content, dict):
                     # It's a directory
                     path.mkdir(parents=True, exist_ok=True)
@@ -275,27 +265,23 @@ class ArchitectStage(BaseStage):
                     if not path.exists():
                         # Create empty file with comment
                         path.write_text(f'"""{content}"""\n')
-        
+
         create_structure(context.output_dir, package_structure)
         logger.info(f"Created directory structure in {context.output_dir}")
-    
+
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate the architecture output."""
-        required_fields = [
-            "package_structure",
-            "dependencies",
-            "api_design"
-        ]
-        
+        required_fields = ["package_structure", "dependencies", "api_design"]
+
         for field in required_fields:
             if field not in output:
                 logger.error(f"Missing required field in architecture output: {field}")
                 return False
-        
+
         # Validate package structure
         package_structure = output.get("package_structure", {})
         if not package_structure:
             logger.error("Package structure cannot be empty")
             return False
-        
+
         return True

@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/providers/ai.py
+# hypothesis_version: 6.133.2
+
+[0.002, 0.01, 0.03, 0.3, 0.4, 0.5, 0.6, 0.7, 1000, 2048, 4096, '*', '-', 'OPENAI_API_KEY', 'USD', 'agent_orchestration', 'ai', 'analysis', 'ansible', 'api_key', 'black', 'capabilities', 'code_generation', 'code_review', 'consider', 'content', 'critical', 'currency', 'docker', 'estimated_cost', 'git', 'github', 'gitlab', 'gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo', 'high', 'immediately', 'important', 'jenkins', 'kubernetes', 'low', 'major security', 'max_tokens', 'medium', 'minor', 'model', 'moderate', 'mypy', 'openai', 'priority', 'provider', 'pytest', 'python', 'recommend', 'recommendations', 'review', 'role', 'security_scanning', 'severe', 'severity', 'should', 'soon', 'steps', 'suggest', 'system', 'temperature', 'terraform', 'test', 'test_generation', 'text_generation', 'tokens', 'tools_required', 'urgent', 'usage', 'user', 'warning', 'workflow']

@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/deployment.py
+# hypothesis_version: 6.133.2
+
+['Dockerfile', 'aws', 'build_result', 'cloud', 'cloud_provider', 'container', 'container_result', 'deployment', 'deployment_results', 'deployment_type', 'docker', 'environment', 'error', 'generation_result', 'image_tag', 'k8s', 'kubernetes', 'main.tf', 'manifests_dir', 'manifests_generated', 'name', 'package_name', 'packaging', 'ports', 'project_path', 'provider', 'replicas', 'run_container', 'success', 'tag', 'terraform', 'terraform_dir', 'type']
