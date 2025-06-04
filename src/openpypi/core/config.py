@@ -160,7 +160,7 @@ class Config(BaseSettings):
     """Main configuration class for OpenPypi projects."""
     
     # Project metadata
-    project_name: str = Field(..., description="Name of the project")
+    project_name: str = Field("openpypi", description="Name of the project")
     package_name: Optional[str] = Field(None, description="Python package name")
     author: str = Field("Nikhil Jois", description="Author name")
     email: str = Field("nikjois@llamasearch.ai", description="Author email")
@@ -194,6 +194,19 @@ class Config(BaseSettings):
     
     # AI configuration
     openai_api_key: Optional[str] = Field(None, description="OpenAI API key")
+    
+    # API configuration  
+    api_host: str = Field("0.0.0.0", description="API host")
+    api_port: int = Field(8000, description="API port")
+    api_reload: bool = Field(False, description="Enable API auto-reload")
+    
+    # Security configuration
+    allowed_hosts: List[str] = Field(["*"], description="Allowed hosts")
+    cors_origins: List[str] = Field(["*"], description="CORS allowed origins")
+    
+    # App configuration
+    app_env: str = Field("development", description="Application environment")
+    log_level: str = Field("INFO", description="Logging level")
     
     class Config:
         env_prefix = "OPENPYPI_"

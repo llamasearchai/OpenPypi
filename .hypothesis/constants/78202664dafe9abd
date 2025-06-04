@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/templates/__init__.py
+# hypothesis_version: 6.133.2
+
+['1.0.0', 'Template', 'TemplateManager', '_', 'description', 'name', 'template.json', 'version']

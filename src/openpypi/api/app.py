@@ -39,7 +39,8 @@ from openpypi.api.routes import (
     health_router,
     admin_router,
     generation_router,
-    router,
+    monitoring_router,
+    openai_router,
 )
 from openpypi.utils.logger import get_logger
 
@@ -154,7 +155,8 @@ def create_app() -> FastAPI:
     app.include_router(packages_router, prefix="/api/v1/packages", tags=["packages"])
     app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
     app.include_router(generation_router, prefix="/api/v1/generate", tags=["generation"])
-    app.include_router(router)
+    app.include_router(monitoring_router, prefix="/api/v1/monitoring", tags=["monitoring"])
+    app.include_router(openai_router, prefix="/api/v1/openai", tags=["openai"])
     
     # Custom OpenAPI schema
     def custom_openapi():
