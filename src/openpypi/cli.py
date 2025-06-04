@@ -49,7 +49,7 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  openpypi create my_project --author "John Doe" --email "john@example.com"
+  openpypi create my_project --author "Nik Jois" --email "nikjois@llamasearch.ai"
   openpypi create my_api --use-fastapi --use-docker --use-openai
   openpypi serve --host 0.0.0.0 --port 8000 --reload
   openpypi validate config.toml
@@ -148,7 +148,7 @@ def _add_generate_arguments(parser: argparse.ArgumentParser) -> None:
         "--package-name", help="Package name (defaults to project name with underscores)"
     )
     parser.add_argument("--author", default="Developer", help="Author name")
-    parser.add_argument("--email", default="developer@example.com", help="Author email")
+    parser.add_argument("--email", default="nikjois@llamasearch.ai", help="Author email")
     parser.add_argument("--description", help="Project description")
     parser.add_argument(
         "--output-dir",

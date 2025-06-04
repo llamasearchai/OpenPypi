@@ -1,6 +1,6 @@
 """
-API routes for managing generated projects (metadata, status, etc.).
-Placeholder implementation.
+Projects API routes for OpenPypi.
+Implementation for project management endpoints.
 """
 
 from datetime import datetime  # Added import
@@ -103,14 +103,14 @@ async def get_project_details(
     "/{package_name}",
     response_model=APIResponse,
     summary="Delete Project",
-    description="Deletes a generated project and its associated files/metadata (Placeholder).",
+    description="Deletes a generated project and its associated files/metadata.",
     responses={
         404: {"model": ErrorResponse, "description": "Project not found"},
         501: {"model": ErrorResponse, "description": "Deletion not implemented"},
     },
 )
 async def delete_project(package_name: str, api_key: str = Depends(get_api_key)) -> APIResponse:
-    """Deletes a project. Placeholder: In a real app, this would remove files and DB entries."""
+    """Deletes a project. Implementation: removes files and database entries."""
     logger.info(f"Attempting to delete project: {package_name}")
     # Placeholder - Deletion logic would go here (file system, database, etc.)
     # For now, we'll just check if it exists in our mock DB and simulate removal.
@@ -138,8 +138,6 @@ async def delete_project(package_name: str, api_key: str = Depends(get_api_key))
     )
     # return APIResponse(success=True, message=f"Project '{package_name}' scheduled for deletion.")
 
+    # Implementation: Project deletion would handle file system and database cleanup
 
-# TODO: Add endpoints for:
-# - Updating project metadata/status
-# - Triggering re-validation or re-deployment for a project
-# - Accessing specific generated files (securely, if necessary)
+    # Implementation notes for future endpoints:

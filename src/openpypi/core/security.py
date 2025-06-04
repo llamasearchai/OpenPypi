@@ -159,7 +159,7 @@ def validate_api_key(api_key: str) -> bool:
 # Initialize the fake database with properly hashed password
 fake_users_db["testuser"] = UserInDB(
     username="testuser",
-    email="testuser@example.com",
+    email="testuser@openpypi.dev",
     full_name="Test User",
     hashed_password=get_password_hash("testpassword"),
     disabled=False,
@@ -168,7 +168,7 @@ fake_users_db["testuser"] = UserInDB(
 # Add test user for auth tests
 fake_users_db["authtestuser"] = UserInDB(
     username="authtestuser",
-    email="authtestuser@example.com",
+    email="authtestuser@openpypi.dev",
     full_name="Auth Test User",
     hashed_password=get_password_hash("authtestpassword"),
     disabled=False,

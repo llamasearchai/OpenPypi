@@ -29,7 +29,7 @@ class PackageContext:
     idea: str
     output_dir: Path
     author: str = "OpenPypi User"
-    email: str = "user@example.com"
+    email: str = "nikjois@llamasearch.ai"
     license_type: str = "MIT"
     python_version: str = ">=3.8"
     package_type: str = "library"

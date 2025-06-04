@@ -27,7 +27,7 @@ Example Usage:
     ...     project_name="My Awesome Project",
     ...     package_name="my_awesome_package",
     ...     author="Your Name",
-    ...     email="you@example.com",
+    ...     email="nikjois@llamasearch.ai",
     ...     use_fastapi=True,
     ...     use_docker=True,
     ...     use_openai=True

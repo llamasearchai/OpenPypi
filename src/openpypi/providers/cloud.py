@@ -137,10 +137,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - {package_name}.example.com
+    - {package_name}.openpypi.dev
     secretName: {package_name}-tls
   rules:
-  - host: {package_name}.example.com
+  - host: {package_name}.openpypi.dev
     http:
       paths:
       - path: /

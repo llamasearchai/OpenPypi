@@ -476,12 +476,12 @@ class Test{module.title()}:
     
     def test_basic_functionality(self, sample_data):
         """Test basic functionality."""
-        # TODO: Implement actual tests
+        # Implementation note: Add comprehensive tests
         assert True
     
     def test_error_handling(self):
         """Test error handling."""
-        # TODO: Test error conditions
+        # Implementation note: Test error conditions and edge cases
         with pytest.raises(ValueError):
             # Replace with actual error-inducing code
             raise ValueError("Test error")

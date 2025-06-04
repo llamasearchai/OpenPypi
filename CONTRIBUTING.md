@@ -46,7 +46,7 @@ We welcome various types of contributions:
 
 ```bash
 # Fork the repository on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/openpypi.git
+git clone https://github.com/llamasearchai/openpypi.git
 cd openpypi
 ```
 
@@ -88,8 +88,8 @@ For testing provider integrations:
 cp .env.example .env
 
 # Edit .env with your API keys
-# OPENAI_API_KEY=your_openai_key
-# GITHUB_TOKEN=your_github_token
+# OPENAI_API_KEY=your_openai_key_here
+# GITHUB_TOKEN=your_github_token_here
 ```
 
 ## Making Contributions
@@ -312,7 +312,7 @@ class TestConfig:
             project_name="test_project",
             package_name="test_package",
             author="Test Author",
-            email="test@example.com"
+            email="developer@openpypi.dev"
         )
         
         config.validate()  # Should not raise
@@ -340,14 +340,14 @@ class TestConfig:
 Use pytest fixtures for common test data:
 
 ```python
-@pytest.fixture
+    @pytest.fixture
 def sample_config():
     """Provide sample configuration for tests."""
     return Config(
         project_name="test_project",
         package_name="test_package",
         author="Test Author",
-        email="test@example.com"
+        email="contributor@openpypi.dev"
     )
 
 @pytest.fixture
@@ -406,7 +406,7 @@ config = Config(
     project_name="My API",
     package_name="my_api",
     author="Your Name",
-    email="you@example.com",
+    email="maintainer@openpypi.dev",
     use_fastapi=True,
     use_docker=True
 )
@@ -422,7 +422,7 @@ print(f"Created project at: {result.output_path}")
 
 1. **Create Feature Branch**
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b feature/your-feature-description
    ```
 
 2. **Make Changes**
@@ -449,7 +449,7 @@ print(f"Created project at: {result.output_path}")
 
 5. **Push to Fork**
    ```bash
-   git push origin feature/your-feature-name
+   git push origin feature/your-feature-description
    ```
 
 6. **Create Pull Request**

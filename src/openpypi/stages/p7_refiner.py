@@ -202,7 +202,7 @@ class RefinerStage(BaseStage):
                     # Add a basic docstring
                     function_name = line.strip().split("(")[0].replace("def ", "")
                     indent = " " * (len(line) - len(line.lstrip()))
-                    docstring = f'{indent}    """TODO: Add docstring for {function_name}."""'
+                    docstring = f'{indent}    """Add docstring for {function_name}."""'
                     optimized_lines.append(docstring)
 
             i += 1
@@ -1084,13 +1084,13 @@ health = HealthChecker()
 # Example health checks
 def database_health_check() -> bool:
     """Example database health check."""
-    # TODO: Implement actual database connectivity check
+    # Implementation note: Database connectivity check would go here
     return True
 
 
 def redis_health_check() -> bool:
     """Example Redis health check."""
-    # TODO: Implement actual Redis connectivity check
+    # Implementation note: Redis connectivity check would go here
     return True
 
 

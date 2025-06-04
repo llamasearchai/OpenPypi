@@ -197,7 +197,7 @@ class PackagerStage(BaseStage):
         
         __version__ = "0.1.0"
         __author__ = "Author Name"
-        __email__ = "author@example.com"
+        __email__ = "nikjois@llamasearch.ai"
         
         from .core import MainClass, main_function
         from .exceptions import CustomError

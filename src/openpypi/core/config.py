@@ -30,7 +30,7 @@ class ProjectConfig(BaseModel):
 
     # Author info
     author_name: str = Field("Your Name", description="Author name")
-    author_email: str = Field("your.email@example.com", description="Author email")
+    author_email: str = Field("nikjois@llamasearch.ai", description="Author email")
 
     # License and metadata
     license_type: str = Field("MIT", description="License type")

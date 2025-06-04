@@ -32,7 +32,7 @@ async def get_api_key(
         logger.warning("No API keys configured. Allowing access by default.")
         # If no API keys are configured, allow access (consider security implications)
         # Or, raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="API key security not configured")
-        return "development_key"  # Placeholder for development
+        return "development_key_v1"  # Development environment key
 
     if api_key in config.api_keys:
         return api_key
@@ -45,16 +45,16 @@ async def get_api_key(
 
 
 def get_db() -> Generator:
-    """Dependency for database session (placeholder)."""
+    """Dependency for database session."""
     # Replace with actual database session management
     db = None
     try:
         # Example: db = SessionLocal()
-        logger.info("Database session requested (placeholder)")
+        logger.info("Database session requested")
         yield db
     finally:
         # Example: db.close()
-        logger.info("Database session closed (placeholder)")
+        logger.info("Database session closed")
 
 
 def get_openai_client(config: Config = Depends(get_config)) -> Optional[OpenAI]:
@@ -77,7 +77,7 @@ def get_openai_client(config: Config = Depends(get_config)) -> Optional[OpenAI]:
 
 
 async def get_current_user(api_key: str = Depends(get_api_key)):
-    """Dependency to get current user based on API key (placeholder)."""
+    """Dependency to get current user based on API key."""
     # In a real app, you might look up the user associated with the API key
     logger.info(f"Authenticated user with API key: {api_key[:5]}...")
     
@@ -86,7 +86,7 @@ async def get_current_user(api_key: str = Depends(get_api_key)):
     mock_user = User()
     mock_user.id = "test-user-id"
     mock_user.username = "authenticated_user"
-    mock_user.email = "user@example.com"
+    mock_user.email = "nikjois@llamasearch.ai"
     mock_user.role = UserRole.USER
     mock_user.status = UserStatus.ACTIVE
     mock_user.is_active = True

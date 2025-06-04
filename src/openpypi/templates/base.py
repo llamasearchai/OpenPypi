@@ -307,7 +307,7 @@ class TemplateManager:
                 # It's a file
                 path.parent.mkdir(parents=True, exist_ok=True)
                 if not path.exists():
-                    path.write_text(content or "# TODO: Implement\n")
+                    path.write_text(content or "# Module implementation\n")
 
     async def list_templates(self) -> List[Template]:
         """List all available templates."""

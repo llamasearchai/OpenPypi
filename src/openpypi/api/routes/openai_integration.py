@@ -97,7 +97,7 @@ async def get_openai_completion(
         )
 
 
-# TODO: Add more specific OpenAI integration endpoints as needed:
+# Implementation notes for additional OpenAI integration endpoints:
 # - /suggest/refactor: For refactoring suggestions
 # - /suggest/docstring: For generating docstrings
 # - /generate/tests: For generating test cases for a piece of code

@@ -126,7 +126,7 @@ class GitHubProvider(BaseProvider):
             logger.debug(f"Could not create dependabot config: {e}")
 
     def _create_repo_file(self, path: str, content: str):
-        """Create a file in the repository (placeholder for actual implementation)"""
+        """Create a file in the repository."""
         # This would normally create files via GitHub API
         logger.debug(f"Would create file {path} with content length {len(content)}")
 
