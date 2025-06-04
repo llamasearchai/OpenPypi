@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/p4_validator.py
+# hypothesis_version: 6.133.2
+
+[0.3, 0.4, 0.5, 0.6, 2.0, 5.0, 6.0, 7.0, 8.0, 10.0, '*.py', '--ignore=E203,W503', '-f', '-m', '-r', '.coveragerc', '.py', '/', 'HIGH', 'MEDIUM', '```\\n(.*?)\\n```', 'bandit', 'bandit_score', 'code_quality', 'conftest.py', 'content', 'flake8', 'flake8_score', 'import_errors', 'issue_severity', 'issues', 'json', 'modules', 'mypy', 'mypy_score', 'overall_score', 'p1_concept', 'p2_architecture', 'p3_implementation', 'p4_validation', 'pytest.ini', 'python', 'quality_score', 'r', 'results', 'src', 'static_analysis', 'syntax_valid', 'test_', 'test_files', 'tests', 'tests/', 'tox.ini', 'utf-8']

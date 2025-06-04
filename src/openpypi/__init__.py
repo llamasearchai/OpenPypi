@@ -66,14 +66,17 @@ from .providers import (
 )
 from .providers import registry as provider_registry
 
+
 # Provider access functions
 def get_ai_provider(config=None):
     """Get AI provider instance."""
     return get_provider("ai", config)
 
+
 def get_openai_provider(config=None):
-    """Get OpenAI provider instance.""" 
+    """Get OpenAI provider instance."""
     return get_provider("openai", config)
+
 
 # Stage pipeline system
 from .stages import (
@@ -148,7 +151,7 @@ class OpenPypi:
         """Set up the generation pipeline with appropriate stages."""
         from .stages.generation import GenerationStage
         from .stages.packaging import PackagingStage
-        from .stages.testing import TestGenerationStage
+        from .stages.testing import TestingStage
         from .stages.validation import ValidationStage
 
         self.pipeline = Pipeline("openpypi_generation")
@@ -157,8 +160,9 @@ class OpenPypi:
         self.pipeline.add_stage(ValidationStage("validation"))
         self.pipeline.add_stage(GenerationStage("generation"))
 
-        if self.config.create_tests:
-            self.pipeline.add_stage(TestGenerationStage("testing"))
+        # Note: Testing stage is disabled for now as it requires the generated project to be fully set up
+        # if self.config.create_tests:
+        #     self.pipeline.add_stage(TestingStage("testing"))
 
         self.pipeline.add_stage(PackagingStage("packaging"))
 

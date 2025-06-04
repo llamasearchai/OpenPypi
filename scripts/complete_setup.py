@@ -12,7 +12,7 @@ from pathlib import Path
 
 def run_command(cmd: str, cwd: str = None, check: bool = True) -> subprocess.CompletedProcess:
     """Run a shell command with proper error handling."""
-    print(f"🔧 Running: {cmd}")
+    print(f"RUNNING: {cmd}")
     try:
         result = subprocess.run(
             cmd, 
@@ -23,10 +23,10 @@ def run_command(cmd: str, cwd: str = None, check: bool = True) -> subprocess.Com
             text=True
         )
         if result.stdout:
-            print(f"✅ Output: {result.stdout.strip()}")
+            print(f"SUCCESS: Output: {result.stdout.strip()}")
         return result
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error: {e}")
+        print(f"ERROR: {e}")
         if e.stderr:
             print(f"Error details: {e.stderr}")
         if check:
@@ -38,23 +38,23 @@ def check_python_version():
     print("🐍 Checking Python version...")
     version = sys.version_info
     if version < (3, 8):
-        print(f"❌ Python {version.major}.{version.minor} is not supported. Please use Python 3.8+")
+        print(f"ERROR: Python {version.major}.{version.minor} is not supported. Please use Python 3.8+")
         sys.exit(1)
-    print(f"✅ Python {version.major}.{version.minor}.{version.micro} is compatible")
+    print(f"SUCCESS: Python {version.major}.{version.minor}.{version.micro} is compatible")
 
 def setup_environment():
     """Set up the development environment."""
-    print("🔧 Setting up development environment...")
+    print("SETUP: Setting up development environment...")
     
     # Ensure we're in the project root
     project_root = Path(__file__).parent.parent
     os.chdir(project_root)
-    print(f"📁 Working directory: {project_root}")
+    print(f"DIRECTORY: Working directory: {project_root}")
     
     # Create virtual environment if it doesn't exist
     venv_path = project_root / "venv"
     if not venv_path.exists():
-        print("🔧 Creating virtual environment...")
+        print("SETUP: Creating virtual environment...")
         run_command(f"{sys.executable} -m venv venv")
     
     # Get the correct pip path
@@ -69,7 +69,7 @@ def setup_environment():
 
 def install_dependencies(pip_path):
     """Install all required dependencies."""
-    print("📦 Installing dependencies...")
+    print("INSTALLING: Installing dependencies...")
     
     # Upgrade pip first
     run_command(f"{pip_path} install --upgrade pip")
@@ -80,11 +80,11 @@ def install_dependencies(pip_path):
     # Install package in development mode
     run_command(f"{pip_path} install -e .")
     
-    print("✅ Dependencies installed successfully!")
+    print("SUCCESS: Dependencies installed successfully!")
 
 def run_tests(python_path):
     """Run the complete test suite."""
-    print("🧪 Running test suite...")
+    print("TESTING: Running test suite...")
     
     # Clean up any previous test artifacts
     for pattern in [".coverage*", "htmlcov", ".pytest_cache"]:
@@ -98,15 +98,15 @@ def run_tests(python_path):
     result = run_command(f"{python_path} -m pytest tests/ --tb=short -v", check=False)
     
     if result.returncode != 0:
-        print("⚠️  Some tests failed, but continuing with setup...")
+        print("WARNING: Some tests failed, but continuing with setup...")
     else:
-        print("✅ All tests passed!")
+        print("SUCCESS: All tests passed!")
     
     return result.returncode == 0
 
 def run_code_quality_checks(python_path):
     """Run code quality checks."""
-    print("🔍 Running code quality checks...")
+    print("CHECKING: Running code quality checks...")
     
     checks = [
         ("Black formatting", f"{python_path} -m black --check src tests"),
@@ -117,19 +117,19 @@ def run_code_quality_checks(python_path):
     
     all_passed = True
     for check_name, command in checks:
-        print(f"  📋 {check_name}...")
+        print(f"  CHECKING: {check_name}...")
         result = run_command(command, check=False)
         if result.returncode != 0:
-            print(f"    ⚠️  {check_name} issues found")
+            print(f"    WARNING: {check_name} issues found")
             all_passed = False
         else:
-            print(f"    ✅ {check_name} passed")
+            print(f"    SUCCESS: {check_name} passed")
     
     return all_passed
 
 def build_package(python_path):
     """Build the package for distribution."""
-    print("📦 Building package...")
+    print("BUILDING: Building package...")
     
     # Clean previous builds
     for pattern in ["build", "dist", "*.egg-info"]:
@@ -144,7 +144,7 @@ def build_package(python_path):
     
     # Check built package
     dist_files = list(Path("dist").glob("*"))
-    print(f"✅ Built package files: {[f.name for f in dist_files]}")
+    print(f"SUCCESS: Built package files: {[f.name for f in dist_files]}")
     
     return len(dist_files) > 0
 
@@ -183,14 +183,14 @@ LOG_LEVEL=INFO
     
     if not Path(".env").exists():
         Path(".env").write_text(env_template.replace("your_", "dev_"))
-        print("✅ Created .env file with development defaults")
+        print("SUCCESS: Created .env file with development defaults")
     
-    print("✅ Environment template created")
+    print("SUCCESS: Environment template created")
 
 def print_next_steps():
     """Print next steps for the user."""
-    print("\n🎉 Setup complete!")
-    print("\n📋 Next steps:")
+    print("\nSUCCESS: Setup complete!")
+    print("\nNEXT STEPS:")
     print("1. Update .env file with your actual API keys")
     print("2. Test the installation:")
     print("   ./venv/bin/python -c 'import openpypi; print(openpypi.__version__)'")
@@ -205,7 +205,7 @@ def print_next_steps():
 
 def main():
     """Main setup function."""
-    print("🚀 Starting OpenPypi complete setup...")
+    print("STARTING: OpenPypi complete setup...")
     
     # Check prerequisites
     check_python_version()
@@ -229,15 +229,15 @@ def main():
     build_success = build_package(python_path)
     
     # Print summary
-    print("\n📊 Setup Summary:")
-    print(f"  Tests: {'✅ Passed' if tests_passed else '⚠️  Issues found'}")
-    print(f"  Code Quality: {'✅ Passed' if quality_passed else '⚠️  Issues found'}")
-    print(f"  Package Build: {'✅ Success' if build_success else '❌ Failed'}")
+    print("\nSUMMARY: Setup Summary:")
+    print(f"  Tests: {'SUCCESS: Passed' if tests_passed else 'WARNING: Issues found'}")
+    print(f"  Code Quality: {'SUCCESS: Passed' if quality_passed else 'WARNING: Issues found'}")
+    print(f"  Package Build: {'SUCCESS: Success' if build_success else 'FAILED: Failed'}")
     
     if build_success:
         print_next_steps()
     else:
-        print("❌ Setup completed with issues. Please review the output above.")
+        print("FAILED: Setup completed with issues. Please review the output above.")
         sys.exit(1)
 
 if __name__ == "__main__":

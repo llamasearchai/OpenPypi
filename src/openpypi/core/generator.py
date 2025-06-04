@@ -1205,6 +1205,11 @@ class OpenAIClient:
     def generate_project_structure(self, output_dir: Path) -> Dict[str, Any]:
         """Generate basic project structure (test compatibility method)."""
         try:
+            # Validate configuration first
+            validation_result = self.validate_config()
+            if not validation_result["valid"]:
+                return {"success": False, "error": "Configuration validation failed"}
+            
             structure_results = self._create_project_structure(output_dir)
             return {"success": True, **structure_results}
         except Exception as e:
@@ -1341,19 +1346,33 @@ class OpenAIClient:
 
     def initialize_git_repository(self, project_dir: Path) -> Dict[str, Any]:
         """Initialize git repository (test compatibility method)."""
-        return self._initialize_git(project_dir)
+        try:
+            results = self._initialize_git(project_dir)
+            # Check if there were any warnings (indicating failure)
+            if results.get("warnings"):
+                return {"success": False, "warnings": results["warnings"]}
+            else:
+                return {"success": True, "commands_run": results.get("commands_run", [])}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
     def generate_complete_project(self, output_dir: Path) -> Dict[str, Any]:
         """Generate complete project (test compatibility method)."""
         try:
-            # Temporarily update config output_dir
+            # Temporarily update config to generate directly in output_dir
             original_output_dir = self.config.output_dir
+            original_project_name = self.config.project_name
+            
+            # Set output_dir to parent and project_name to the directory name
+            # so that the project is created directly in output_dir
             self.config.output_dir = output_dir.parent
+            self.config.project_name = output_dir.name
 
             results = self.generate()
 
-            # Restore original output_dir
+            # Restore original config
             self.config.output_dir = original_output_dir
+            self.config.project_name = original_project_name
 
             return {
                 "success": True,

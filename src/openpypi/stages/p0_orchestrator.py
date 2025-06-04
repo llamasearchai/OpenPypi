@@ -50,7 +50,7 @@ class OrchestratorStage(Stage):
         start_time = datetime.now()
 
         try:
-            logger.info(f"🎯 Starting project orchestration: {self.name}")
+            logger.info(f"Starting project orchestration: {self.name}")
 
             # Validate context and configuration
             validation_result = self._validate_orchestration_context(context)
@@ -64,7 +64,7 @@ class OrchestratorStage(Stage):
 
             # Build execution plan
             execution_plan = self._build_execution_plan(context)
-            logger.info(f"📋 Execution plan: {' → '.join(execution_plan)}")
+            logger.info(f"Execution plan: {' → '.join(execution_plan)}")
 
             # Execute stages according to plan
             orchestration_results = self._execute_orchestration_plan(context, execution_plan)
@@ -99,7 +99,7 @@ class OrchestratorStage(Stage):
             }
 
             if overall_success:
-                logger.info(f"✅ Orchestration completed successfully in {execution_time:.2f}s")
+                logger.info(f"Orchestration completed successfully in {execution_time:.2f}s")
                 return StageResult(
                     stage_name=self.name,
                     status=StageStatus.SUCCESS,
@@ -109,7 +109,7 @@ class OrchestratorStage(Stage):
                 )
             else:
                 failed_count = total_stages - success_count
-                logger.warning(f"⚠️ Orchestration completed with {failed_count} failures")
+                logger.warning(f"Orchestration completed with {failed_count} failures")
                 return StageResult(
                     stage_name=self.name,
                     status=(
@@ -122,7 +122,7 @@ class OrchestratorStage(Stage):
 
         except Exception as e:
             execution_time = (datetime.now() - start_time).total_seconds()
-            logger.error(f"❌ Orchestration failed: {e}")
+            logger.error(f"Orchestration failed: {e}")
             return StageResult(
                 stage_name=self.name,
                 status=StageStatus.FAILED,
@@ -181,7 +181,7 @@ class OrchestratorStage(Stage):
         for stage in base_plan:
             # Add stage to plan based on configuration
             if stage == "deployer" and not project_config.use_docker:
-                logger.info(f"⏭️  Skipping {stage} (Docker disabled)")
+                logger.info(f"Skipping {stage} (Docker disabled)")
                 continue
 
             filtered_plan.append(stage)
@@ -206,7 +206,7 @@ class OrchestratorStage(Stage):
         results = {}
 
         for stage_name in execution_plan:
-            logger.info(f"🔄 Executing stage: {stage_name}")
+            logger.info(f"Executing stage: {stage_name}")
 
             try:
                 # Create stage instance
@@ -221,13 +221,13 @@ class OrchestratorStage(Stage):
 
                 # Check if we should continue on failure
                 if result.status == StageStatus.FAILED and not self.continue_on_failure:
-                    logger.error(f"❌ Stage {stage_name} failed, stopping execution")
+                    logger.error(f"Stage {stage_name} failed, stopping execution")
                     break
 
-                logger.info(f"✅ Stage {stage_name} completed: {result.status.value}")
+                logger.info(f"Stage {stage_name} completed: {result.status.value}")
 
             except Exception as e:
-                logger.error(f"❌ Error executing stage {stage_name}: {e}")
+                logger.error(f"Error executing stage {stage_name}: {e}")
                 results[stage_name] = StageResult(
                     stage_name=stage_name,
                     status=StageStatus.FAILED,
@@ -248,7 +248,7 @@ class OrchestratorStage(Stage):
         # In a more sophisticated implementation, this would analyze dependencies
         # and execute independent stages in parallel
 
-        logger.info("🔀 Parallel execution not fully implemented, falling back to sequential")
+        logger.info("Parallel execution not fully implemented, falling back to sequential")
         return self._execute_sequential(context, execution_plan)
 
     def _create_stage_instance(self, stage_name: str) -> Stage:
@@ -291,7 +291,7 @@ class OrchestratorStage(Stage):
             try:
                 if attempt > 0:
                     logger.info(
-                        f"🔄 Retrying stage {stage.name} (attempt {attempt + 1}/{self.max_retries + 1})"
+                        f"Retrying stage {stage.name} (attempt {attempt + 1}/{self.max_retries + 1})"
                     )
 
                 result = stage.execute(context)
@@ -299,7 +299,7 @@ class OrchestratorStage(Stage):
                 if result.status == StageStatus.SUCCESS:
                     return result
                 elif result.status == StageStatus.FAILED and attempt < self.max_retries:
-                    logger.warning(f"⚠️ Stage {stage.name} failed, will retry")
+                    logger.warning(f"Stage {stage.name} failed, will retry")
                     last_exception = result.error
                     continue
                 else:
@@ -308,11 +308,11 @@ class OrchestratorStage(Stage):
             except Exception as e:
                 last_exception = e
                 if attempt < self.max_retries:
-                    logger.warning(f"⚠️ Stage {stage.name} raised exception, will retry: {e}")
+                    logger.warning(f"Stage {stage.name} raised exception, will retry: {e}")
                     continue
                 else:
                     logger.error(
-                        f"❌ Stage {stage.name} failed after {self.max_retries} retries: {e}"
+                        f"Stage {stage.name} failed after {self.max_retries} retries: {e}"
                     )
 
         # If we get here, all retries failed
@@ -343,7 +343,7 @@ class MockStage(Stage):
 
     def execute(self, context: Dict[str, Any]) -> StageResult:
         """Execute mock stage."""
-        logger.info(f"🎭 Executing mock stage: {self.name}")
+        logger.info(f"Executing mock stage: {self.name}")
 
         return StageResult(
             stage_name=self.name,

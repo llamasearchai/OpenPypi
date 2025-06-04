@@ -1,3 +1,31 @@
+"""
+Comprehensive validation utilities for OpenPypi projects.
+
+This module provides extensive validation capabilities for:
+- Code syntax and quality
+- Project structure 
+- Dependencies and security
+- Documentation and tests
+- Performance and standards compliance
+"""
+
+import ast
+import re
+import sys
+import subprocess
+import json
+import tempfile
+import shutil
+from pathlib import Path
+from typing import Any, Dict, List, Tuple, Optional, Set
+import asyncio
+import logging
+from concurrent.futures import ThreadPoolExecutor
+
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 class CodeValidator:
     """Validates Python code quality and correctness."""
 
@@ -1552,53 +1580,53 @@ class QualityValidator:
 
         # High priority recommendations (critical issues)
         if results["code_quality"].get("syntax_errors"):
-            recommendations.append("🚨 CRITICAL: Fix syntax errors before proceeding")
+            recommendations.append("CRITICAL: Fix syntax errors before proceeding")
 
         if not results["security"].get("overall_secure", True):
-            recommendations.append("🚨 CRITICAL: Address security vulnerabilities immediately")
+            recommendations.append("CRITICAL: Address security vulnerabilities immediately")
 
         # Structure recommendations
         structure_score = results["package_structure"].get("structure_score", 0)
         if structure_score < 70:
-            recommendations.append("📁 Improve package structure and add missing files")
+            recommendations.append("Improve package structure and add missing files")
 
         # Code quality recommendations
         code_score = results["code_quality"].get("overall_quality_score", 0)
         if code_score < 0.7:
             recommendations.append(
-                "🔧 Improve code quality: add type hints, docstrings, and follow PEP 8"
+                "Improve code quality: add type hints, docstrings, and follow PEP 8"
             )
 
         # Test recommendations
         if not results["tests"].get("has_tests", False):
-            recommendations.append("🧪 Add comprehensive test suite with pytest")
+            recommendations.append("Add comprehensive test suite with pytest")
         elif results["tests"].get("total_coverage", 0) < 80:
-            recommendations.append("📊 Increase test coverage to at least 80%")
+            recommendations.append("Increase test coverage to at least 80%")
 
         # Documentation recommendations
         doc_score = results["documentation"].get("overall_doc_score", 0)
         if doc_score < 70:
-            recommendations.append("📚 Improve documentation: README, docstrings, and API docs")
+            recommendations.append("Improve documentation: README, docstrings, and API docs")
 
         # Specific recommendations from sub-validators
         for category in ["package_structure", "code_quality", "security", "tests", "documentation"]:
             if category in results and "recommendations" in results[category]:
                 for rec in results[category]["recommendations"][:2]:  # Limit to top 2 per category
                     if rec not in recommendations:
-                        recommendations.append(f"💡 {rec}")
+                        recommendations.append(f"Consider: {rec}")
 
         # General recommendations
         if results["overall_score"] < 60:
             recommendations.append(
-                "🎯 Focus on fixing critical issues first, then improve incrementally"
+                "Focus on fixing critical issues first, then improve incrementally"
             )
         elif results["overall_score"] < 80:
             recommendations.append(
-                "⭐ Good foundation! Polish remaining issues for production readiness"
+                "Good foundation! Polish remaining issues for production readiness"
             )
         else:
             recommendations.append(
-                "🎉 Excellent quality! Consider advanced optimizations and features"
+                "Excellent quality! Consider advanced optimizations and features"
             )
 
         return recommendations[:10]  # Limit to top 10 recommendations

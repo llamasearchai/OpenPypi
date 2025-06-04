@@ -115,6 +115,11 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["openpypi*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+openpypi = ["templates/**/*", "py.typed"]
 
 [tool.setuptools_scm]
 write_to = "src/openpypi/_version.py"

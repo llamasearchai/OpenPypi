@@ -43,7 +43,7 @@ class TestGenerator:
     
     def analyze_coverage_gaps(self) -> Dict[str, Dict[str, Any]]:
         """Analyze code coverage to identify gaps."""
-        logger.info("🔍 Analyzing coverage gaps...")
+        logger.info("ANALYZING: Analyzing coverage gaps...")
         
         # Run coverage analysis
         cmd = [
@@ -88,7 +88,7 @@ class TestGenerator:
     
     def generate_core_tests(self) -> List[str]:
         """Generate tests for core modules."""
-        logger.info("🧪 Generating core module tests...")
+        logger.info("TESTING: Generating core module tests...")
         
         test_files = []
         core_modules = [
@@ -701,7 +701,7 @@ class Test{module_name.replace("_", "").title()}Comprehensive:
     
     def enhance_existing_tests(self) -> List[str]:
         """Enhance existing test files with additional test cases."""
-        logger.info("🔧 Enhancing existing tests...")
+        logger.info("ENHANCING: Enhancing existing tests...")
         
         enhanced_files = []
         
@@ -786,8 +786,8 @@ def main():
     generator = TestGenerator(args.project_root)
     modules = [m.strip() for m in args.modules.split(',')]
     
-    logger.info(f"🚀 Enhancing test coverage for modules: {modules}")
-    logger.info(f"🎯 Target coverage: {args.target_coverage}%")
+    logger.info(f"STARTING: Enhancing test coverage for modules: {modules}")
+    logger.info(f"TARGET: Target coverage: {args.target_coverage}%")
     
     all_generated_files = []
     
@@ -815,9 +815,9 @@ def main():
     enhanced_files = generator.enhance_existing_tests()
     logger.info(f"Enhanced {len(enhanced_files)} existing test files")
     
-    logger.info(f"✅ Test enhancement complete!")
-    logger.info(f"📁 Generated/enhanced {len(all_generated_files) + len(enhanced_files)} test files")
-    logger.info("🧪 Run 'python -m pytest tests/ --cov=src/openpypi' to check coverage")
+    logger.info(f"SUCCESS: Test enhancement complete!")
+    logger.info(f"FILES: Generated/enhanced {len(all_generated_files) + len(enhanced_files)} test files")
+    logger.info("TESTING: Run 'python -m pytest tests/ --cov=src/openpypi' to check coverage")
 
 
 if __name__ == "__main__":

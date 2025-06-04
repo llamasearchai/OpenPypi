@@ -18,7 +18,7 @@ class PackagingStage(Stage):
 
     def __init__(self, name: str, config: Dict[str, Any] = None):
         super().__init__(name, config)
-        self.dependencies = ["testing"]  # Depends on testing stage
+        self.dependencies = ["generation"]  # Depends on generation stage
 
     def execute(self, context: Dict[str, Any]) -> StageResult:
         """Execute packaging stage."""

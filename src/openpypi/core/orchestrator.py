@@ -87,7 +87,7 @@ class PipelineOrchestrator:
 
                 # Update progress
                 if self.progress_callback:
-                    self.progress_callback(stage_index, f"Executing {stage_name}", "🔄 In Progress")
+                    self.progress_callback(stage_index, f"Executing {stage_name}", "IN PROGRESS")
 
                 # Create and execute stage
                 stage_instance = stage_class(self.provider)
@@ -98,7 +98,7 @@ class PipelineOrchestrator:
                     # Update progress - success
                     if self.progress_callback:
                         self.progress_callback(
-                            stage_index, f"Completed {stage_name}", "✅ Complete"
+                            stage_index, f"Completed {stage_name}", "Complete"
                         )
 
                     logger.info(f"Stage {stage_index} ({stage_name}) completed successfully")
@@ -106,7 +106,7 @@ class PipelineOrchestrator:
                 except Exception as stage_error:
                     # Update progress - error
                     if self.progress_callback:
-                        self.progress_callback(stage_index, f"Failed {stage_name}", "❌ Failed")
+                        self.progress_callback(stage_index, f"Failed {stage_name}", "Failed")
 
                     logger.error(f"Stage {stage_index} ({stage_name}) failed: {stage_error}")
 
@@ -115,7 +115,7 @@ class PipelineOrchestrator:
                         logger.info(f"Stage {stage_index} recovered successfully")
                         if self.progress_callback:
                             self.progress_callback(
-                                stage_index, f"Recovered {stage_name}", "🔄 Recovered"
+                                stage_index, f"Recovered {stage_name}", "Recovered"
                             )
                     else:
                         raise PipelineError(
@@ -131,7 +131,7 @@ class PipelineOrchestrator:
 
             # Update final progress
             if self.progress_callback:
-                self.progress_callback(self.total_stages, "Pipeline Complete", "🎉 Success")
+                self.progress_callback(self.total_stages, "Pipeline Complete", "Success")
 
             return context
 
@@ -141,7 +141,7 @@ class PipelineOrchestrator:
 
             # Update progress - pipeline failed
             if self.progress_callback:
-                self.progress_callback(self.current_stage, "Pipeline Failed", "💥 Error")
+                self.progress_callback(self.current_stage, "Pipeline Failed", "Error")
 
             raise PipelineError(f"Package generation pipeline failed: {e}") from e
 
@@ -276,7 +276,7 @@ class PipelineOrchestrator:
             logger.info(f"Executing Stage {stage_index}: {stage_name}")
 
             if self.progress_callback:
-                self.progress_callback(stage_index, f"Executing {stage_name}", "🔄 In Progress")
+                self.progress_callback(stage_index, f"Executing {stage_name}", "In Progress")
 
             stage_instance = stage_class(self.provider)
 
@@ -284,13 +284,13 @@ class PipelineOrchestrator:
                 await stage_instance.execute(context)
 
                 if self.progress_callback:
-                    self.progress_callback(stage_index, f"Completed {stage_name}", "✅ Complete")
+                    self.progress_callback(stage_index, f"Completed {stage_name}", "Complete")
 
                 logger.info(f"Stage {stage_index} ({stage_name}) completed successfully")
 
             except Exception as stage_error:
                 if self.progress_callback:
-                    self.progress_callback(stage_index, f"Failed {stage_name}", "❌ Failed")
+                    self.progress_callback(stage_index, f"Failed {stage_name}", "Failed")
 
                 logger.error(f"Stage {stage_index} ({stage_name}) failed: {stage_error}")
                 raise PipelineError(

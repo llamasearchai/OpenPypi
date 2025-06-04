@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/p3_packager.py
+# hypothesis_version: 6.133.2
+
+[0.5, '\n[project.scripts]\n', '.gitignore', '.py', 'MANIFEST.in', 'No modules generated', '\\n(.*?)\\n', '__init__', '__init__.py', '```', 'above', 'api_design', 'black>=22.0.0', 'cli', 'console_scripts', 'content', 'core', 'dependencies', 'dev', 'entry_points', 'exceptions', 'flake8>=5.0.0', 'helpers', 'here', 'isort>=5.10.0', 'main', 'modules', 'mypy>=1.0.0', 'optional', 'p1_concept', 'p2_architecture', 'p3_implementation', 'package_structure', 'pyproject.toml', 'pytest-cov>=4.0.0', 'pytest>=7.0.0', 'requirements-dev.txt', 'requirements.txt', 'setup.py', 'test', 'the', 'this', 'utf-8', 'utils']

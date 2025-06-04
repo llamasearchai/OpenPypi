@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/p5_documentarian.py
+# hypothesis_version: 6.133.2
+
+[0.6, 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'api_design', 'api_docs', 'content', 'key_features', 'p1_concept', 'p2_architecture', 'p3_implementation', 'p5_documentation', 'use_cases', 'user_guide']

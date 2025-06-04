@@ -1,8 +1,16 @@
 """
 Command-line interface for OpenPypi.
+
+This module provides the main CLI entry point for OpenPypi, supporting:
+- Project generation with customizable templates
+- FastAPI server management
+- Provider management and testing
+- Configuration validation
+- Package publishing to PyPI
 """
 
 import argparse
+import asyncio
 import importlib.metadata
 import os
 import sys
@@ -11,15 +19,16 @@ from typing import List, Optional
 
 try:
     import uvicorn
-
     UVICORN_AVAILABLE = True
 except ImportError:
     UVICORN_AVAILABLE = False
 
 from .core import Config, ProjectGenerator
+from .core.context import PackageContext
 from .core.exceptions import OpenPypiError
 from .providers import get_provider, list_providers
 from .utils.logger import get_logger, setup_logging
+from .stages.p6_deployer import DeployerStage
 
 logger = get_logger(__name__)
 
@@ -45,6 +54,7 @@ Examples:
   openpypi serve --host 0.0.0.0 --port 8000 --reload
   openpypi validate config.toml
   openpypi providers list
+  openpypi publish ./my_project --token $PYPI_TOKEN
         """,
     )
 
@@ -116,6 +126,17 @@ Examples:
     create_config_parser.add_argument(
         "--format", choices=["toml", "json"], default="toml", help="Configuration file format"
     )
+
+    # Publish command
+    publish_parser = subparsers.add_parser("publish", help="Publish package to PyPI")
+    publish_parser.add_argument("project_dir", type=Path, help="Path to project directory")
+    publish_parser.add_argument("--token", help="PyPI API token (or use PYPI_TOKEN env var)")
+    publish_parser.add_argument("--repository-url", default="https://upload.pypi.org/legacy/",
+                              help="PyPI repository URL")
+    publish_parser.add_argument("--skip-build", action="store_true", 
+                              help="Skip building distributions")
+    publish_parser.add_argument("--test", action="store_true",
+                              help="Upload to test.pypi.org instead")
 
     return parser
 
@@ -226,21 +247,21 @@ def handle_create_command(args) -> int:
         results = generator.generate()
 
         # Print results
-        print(f"\n✅ Project '{config.project_name}' created successfully!")
-        print(f"📁 Location: {results['project_dir']}")
-        print(f"📄 Files created: {len(results['files_created'])}")
-        print(f"📁 Directories created: {len(results['directories_created'])}")
+        print(f"\nProject '{config.project_name}' created successfully!")
+        print(f"Location: {results['project_dir']}")
+        print(f"Files created: {len(results['files_created'])}")
+        print(f"Directories created: {len(results['directories_created'])}")
 
         if results.get("commands_run"):
-            print(f"🔧 Commands executed: {len(results['commands_run'])}")
+            print(f"Commands executed: {len(results['commands_run'])}")
 
         if results.get("warnings"):
-            print(f"\n⚠️  Warnings:")
+            print(f"\nWarnings:")
             for warning in results["warnings"]:
                 print(f"   • {warning}")
 
         # Display next steps
-        print(f"\n🚀 Next steps:")
+        print(f"\nNext steps:")
         project_path = Path(results["project_dir"])
         print(f"   cd {project_path.name}")
 
@@ -262,18 +283,20 @@ def handle_create_command(args) -> int:
             print(f"   # Run tests with coverage")
             print(f"   pytest --cov={config.package_name}")
 
+        print(f"\n   # Publish to PyPI")
+        print(f"   openpypi publish . --token YOUR_PYPI_TOKEN")
+
         return 0
 
     except OpenPypiError as e:
         logger.error(f"Creation failed: {e}")
-        print(f"❌ Error: {e}", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         return 1
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
-        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        print(f"Unexpected error: {e}", file=sys.stderr)
         if args.verbose:
             import traceback
-
             traceback.print_exc()
         return 1
 
@@ -282,7 +305,7 @@ def handle_serve_command(args) -> int:
     """Handle the serve command."""
     try:
         if not UVICORN_AVAILABLE:
-            print("❌ Error: uvicorn is required for the serve command", file=sys.stderr)
+            print("Error: uvicorn is required for the serve command", file=sys.stderr)
             print("   Install with: pip install 'openpypi[dev]'", file=sys.stderr)
             return 1
 
@@ -291,7 +314,7 @@ def handle_serve_command(args) -> int:
 
         app = create_app()
 
-        print(f"🚀 Starting OpenPypi API server...")
+        print(f"Starting OpenPypi API server...")
         print(f"   Host: {args.host}")
         print(f"   Port: {args.port}")
         print(f"   Reload: {args.reload}")
@@ -312,11 +335,11 @@ def handle_serve_command(args) -> int:
 
     except ImportError as e:
         logger.error(f"Failed to import FastAPI app: {e}")
-        print(f"❌ Error: Failed to start server - {e}", file=sys.stderr)
+        print(f"Error: Failed to start server - {e}", file=sys.stderr)
         return 1
     except Exception as e:
         logger.error(f"Server error: {e}")
-        print(f"❌ Server error: {e}", file=sys.stderr)
+        print(f"Server error: {e}", file=sys.stderr)
         return 1
 
 
@@ -334,17 +357,17 @@ def handle_validate_command(args) -> int:
                     break
 
             if not config_file:
-                print("❌ No configuration file specified or found", file=sys.stderr)
+                print("No configuration file specified or found", file=sys.stderr)
                 print("   Use: openpypi validate <config_file>", file=sys.stderr)
                 return 1
 
-        print(f"🔍 Validating configuration: {config_file}")
+        print(f"Validating configuration: {config_file}")
 
         # Load and validate configuration
         config = Config.from_file(config_file)
         config.validate()
 
-        print("✅ Configuration is valid!")
+        print("Configuration is valid!")
 
         # Show configuration summary
         print(f"\nConfiguration Summary:")
@@ -360,11 +383,11 @@ def handle_validate_command(args) -> int:
         return 0
 
     except OpenPypiError as e:
-        print(f"❌ Configuration invalid: {e}", file=sys.stderr)
+        print(f"Configuration invalid: {e}", file=sys.stderr)
         return 1
     except Exception as e:
         logger.error(f"Validation error: {e}")
-        print(f"❌ Validation error: {e}", file=sys.stderr)
+        print(f"Validation error: {e}", file=sys.stderr)
         return 1
 
 
@@ -379,14 +402,14 @@ def handle_providers_command(args) -> int:
                 try:
                     provider = get_provider(provider_name)
                     capabilities = provider.get_capabilities()
-                    status = "✅ Available" if provider.is_configured else "⚠️  Not configured"
+                    status = "Available" if provider.is_configured else "Not configured"
                     print(f"{provider_name:15} {status:15} {', '.join(capabilities)}")
                 except Exception as e:
-                    print(f"{provider_name:15} {'❌ Error':15} {e}")
+                    print(f"{provider_name:15} {'Error':15} {e}")
 
         elif args.providers_action == "test":
             provider_name = args.provider_name
-            print(f"🔍 Testing provider: {provider_name}")
+            print(f"Testing provider: {provider_name}")
 
             config = {}
             if args.config_key:
@@ -397,9 +420,9 @@ def handle_providers_command(args) -> int:
             provider = get_provider(provider_name, config)
 
             if provider.validate_connection():
-                print(f"✅ Provider '{provider_name}' connection successful!")
+                print(f"Provider '{provider_name}' connection successful!")
             else:
-                print(f"❌ Provider '{provider_name}' connection failed!")
+                print(f"Provider '{provider_name}' connection failed!")
                 return 1
 
         elif args.providers_action == "capabilities":
@@ -416,7 +439,7 @@ def handle_providers_command(args) -> int:
 
     except Exception as e:
         logger.error(f"Provider command error: {e}")
-        print(f"❌ Provider error: {e}", file=sys.stderr)
+        print(f"Provider error: {e}", file=sys.stderr)
         return 1
 
 
@@ -448,7 +471,7 @@ def handle_config_command(args) -> int:
                 output_file = args.output
 
             config.to_file(output_file)
-            print(f"✅ Configuration template created: {output_file}")
+            print(f"Configuration template created: {output_file}")
             print(
                 f"   Edit the file and use with: openpypi create my_project --config {output_file}"
             )
@@ -457,78 +480,126 @@ def handle_config_command(args) -> int:
 
     except OpenPypiError as e:
         logger.error(f"Config operation failed: {e}")
-        print(f"❌ Error: {e}", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         return 1
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
-        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        print(f"Unexpected error: {e}", file=sys.stderr)
         return 1
 
 
-def handle_health_check(args) -> int:
-    """Handle health check command."""
+def handle_publish_command(args) -> int:
+    """
+    Handle the publish command to upload packages to PyPI.
+    
+    This command:
+    1. Builds the package distributions if not already built
+    2. Validates the distributions
+    3. Uploads to PyPI using the provided token
+    """
     try:
-        from .core.env_manager import EnvironmentManager
-
-        env_manager = EnvironmentManager()
-        config = env_manager.get_config()
-        validation = env_manager.validate_production_config()
-
-        print(f"🔍 Health Check Results:")
-        print(f"Environment: {config.environment}")
-        print(f"Debug Mode: {config.debug}")
-        print(f"Configuration Valid: {'✅' if validation['valid'] else '❌'}")
-
-        if validation["issues"]:
-            print(f"\n⚠️  Configuration Issues:")
-            for issue in validation["issues"]:
-                print(f"   • {issue}")
-            return 1
-
-        print(f"\n✅ All systems operational!")
-        return 0
-
-    except Exception as e:
-        print(f"❌ Health check failed: {e}")
-        return 1
-
-
-def handle_secure_setup(args) -> int:
-    """Handle secure setup command."""
-    try:
-        import secrets
+        import subprocess
         from pathlib import Path
-
-        print("🔐 Setting up secure configuration...")
-
-        # Generate secure secret key
-        secret_key = secrets.token_urlsafe(32)
-
-        # Create secure .env file
-        env_content = f"""# Secure OpenPypi Configuration
-SECRET_KEY={secret_key}
-OPENAI_API_KEY=your_actual_openai_key_here
-PYPI_API_TOKEN=your_actual_pypi_token_here
-ENVIRONMENT=production
-DEBUG=false
-"""
-
-        env_file = Path(".env.secure")
-        env_file.write_text(env_content)
-
-        print(f"✅ Secure configuration created: {env_file}")
-        print("⚠️  Please update with your actual API keys!")
-        print("⚠️  Move to .env when ready and keep secure!")
-
-        return 0
-
+        
+        project_dir = args.project_dir.resolve()
+        
+        # Check if project directory exists
+        if not project_dir.exists():
+            print(f"Error: Project directory not found: {project_dir}", file=sys.stderr)
+            return 1
+            
+        # Get PyPI token
+        pypi_token = args.token or os.getenv("PYPI_TOKEN")
+        if not pypi_token:
+            print("Error: PyPI token not provided. Use --token or set PYPI_TOKEN env var", file=sys.stderr)
+            return 1
+            
+        # Set repository URL
+        if args.test:
+            repository_url = "https://test.pypi.org/legacy/"
+        else:
+            repository_url = args.repository_url
+            
+        # Build distributions if needed
+        dist_dir = project_dir / "dist"
+        if not args.skip_build or not dist_dir.exists() or not list(dist_dir.glob("*.tar.gz")):
+            print(f"Building distributions in {project_dir}...")
+            
+            # Clean old distributions
+            if dist_dir.exists():
+                import shutil
+                shutil.rmtree(dist_dir)
+                
+            # Build the package
+            result = subprocess.run(
+                [sys.executable, "-m", "build", "--outdir", str(dist_dir)],
+                cwd=project_dir,
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode != 0:
+                print(f"Build failed: {result.stderr}", file=sys.stderr)
+                return 1
+                
+            print("Build successful!")
+            
+        # Check for distribution files
+        dist_files = list(dist_dir.glob("*.tar.gz")) + list(dist_dir.glob("*.whl"))
+        if not dist_files:
+            print("Error: No distribution files found to upload", file=sys.stderr)
+            return 1
+            
+        print(f"Found {len(dist_files)} distribution files to upload")
+        
+        # Upload using twine
+        print(f"Uploading to {repository_url}...")
+        
+        # Create the upload command
+        upload_cmd = [
+            sys.executable, "-m", "twine", "upload",
+            "--repository-url", repository_url,
+            "--username", "__token__",
+            "--password", pypi_token,
+            "--verbose"
+        ]
+        
+        # Add all distribution files
+        upload_cmd.extend(str(f) for f in dist_files)
+        
+        # Run upload
+        result = subprocess.run(upload_cmd, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            print("\nPackage published successfully!")
+            if args.test:
+                print(f"View at: https://test.pypi.org/project/{project_dir.name}/")
+            else:
+                print(f"View at: https://pypi.org/project/{project_dir.name}/")
+            return 0
+        else:
+            print(f"Upload failed: {result.stderr}", file=sys.stderr)
+            return 1
+            
     except Exception as e:
-        print(f"❌ Secure setup failed: {e}")
+        logger.error(f"Publish error: {e}")
+        print(f"Publish error: {str(e)}", file=sys.stderr)
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
         return 1
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """Main CLI entry point."""
+    """
+    Main CLI entry point.
+    
+    This function:
+    1. Parses command-line arguments
+    2. Sets up logging based on verbosity
+    3. Routes to appropriate command handlers
+    4. Returns exit code (0 for success, non-zero for failure)
+    """
     parser = create_parser()
     args = parser.parse_args(argv)
 
@@ -547,10 +618,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         return handle_providers_command(args)
     elif args.command == "config":
         return handle_config_command(args)
-    elif args.command == "health-check":
-        return handle_health_check(args)
-    elif args.command == "secure-setup":
-        return handle_secure_setup(args)
+    elif args.command == "publish":
+        return handle_publish_command(args)
     else:
         parser.print_help()
         return 0

@@ -7,10 +7,13 @@ import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import getpass
 
 from openpypi.core.context import PackageContext
 from openpypi.stages.base import BaseStage
 from openpypi.utils.logger import get_logger
+from twine.commands.upload import upload as twine_upload
+from twine.settings import Settings
 
 logger = get_logger(__name__)
 
@@ -72,8 +75,36 @@ class DeployerStage(BaseStage):
             else:
                 raise ValueError("Deployment configuration validation failed")
 
+            # Get PyPI token securely
+            if not context.config.get('PYPI_TOKEN'):
+                context.config['PYPI_TOKEN'] = getpass.getpass("Enter your PyPI API token: ")
+                
+            # Configure twine
+            settings = Settings(
+                username='__token__',
+                password=context.config['PYPI_TOKEN'],
+                repository_url="https://upload.pypi.org/legacy/",
+                disable_progress_bar=False,
+            )
+
+            # Upload package
+            dist_path = context.output_dir / 'dist'
+            if not list(dist_path.glob('*.tar.gz')):
+                self.log_stage_error("No distribution files found. Run build first.")
+                return
+
+            result = twine_upload(
+                settings,
+                [str(p) for p in dist_path.glob('*')]
+            )
+            
+            if result:
+                self.log_stage_info(f"Successfully published {len(result)} packages")
+            else:
+                self.log_stage_error("Package upload failed")
+
         except Exception as e:
-            self.log_stage_error(e)
+            self.log_stage_error(f"Publishing failed: {str(e)}")
             raise
 
     async def _create_deployment_configs(

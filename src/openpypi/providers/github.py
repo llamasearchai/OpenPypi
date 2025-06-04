@@ -12,6 +12,7 @@ try:
     import requests
     import yaml
     from cryptography.fernet import Fernet
+
     REQUESTS_AVAILABLE = True
     YAML_AVAILABLE = True
     CRYPTO_AVAILABLE = True
@@ -23,8 +24,8 @@ except ImportError:
     YAML_AVAILABLE = False
     CRYPTO_AVAILABLE = False
 
-from .base import BaseProvider
 from ..utils.logger import get_logger
+from .base import BaseProvider
 
 logger = get_logger(__name__)
 
@@ -37,6 +38,9 @@ class GitHubProvider(BaseProvider):
         return "github"
 
     def __init__(self, config: Optional[Dict] = None):
+        # Initialize token attribute
+        self.token = None
+        self.username = None
         super().__init__(config)
 
     def _configure(self) -> None:
@@ -52,50 +56,53 @@ class GitHubProvider(BaseProvider):
             else:
                 self._key = Fernet.generate_key()
                 self.cipher = Fernet(self._key)
-                
+
                 encrypted_token = self.config.get("encrypted_token")
                 if encrypted_token:
                     self.token = self.cipher.decrypt(encrypted_token.encode()).decode()
                 else:
                     raw_token = self.config.get("token") or os.getenv("GITHUB_TOKEN")
                     if raw_token:
-                        # For testing, accept test tokens
+                        # For testing, accept test tokens as-is without encryption
                         if raw_token.startswith("test_") or raw_token == "test_token":
                             self.token = raw_token
                         else:
-                            self.token = self.cipher.encrypt(raw_token.encode()).decode()
+                            # Only encrypt real GitHub tokens, store encrypted version
+                            encrypted = self.cipher.encrypt(raw_token.encode()).decode()
+                            self.token = raw_token  # Keep the original token for use
+                            self.encrypted_token = encrypted  # Store encrypted version
                     else:
                         raise ValueError("GitHub token not provided")
-                
+
             # Validate token format (more flexible for testing)
             if self.token and not (
-                re.match(r"^ghp_[a-zA-Z0-9]{36}$", self.token) or 
-                self.token.startswith("test_") or
-                self.token == "test_token"
+                re.match(r"^ghp_[a-zA-Z0-9]{36}$", self.token)
+                or self.token.startswith("test_")
+                or self.token == "test_token"
             ):
                 raise ValueError("Invalid GitHub token format")
-                
+
             self.username = self.config.get("username") or os.getenv("GITHUB_USERNAME")
             self.api_url = self.config.get("api_url", "https://api.github.com")
-            
+
             if REQUESTS_AVAILABLE:
                 self.headers = {
                     "Authorization": f"Bearer {self.token}",
                     "Accept": "application/vnd.github+json",
                     "X-GitHub-Api-Version": "2024-11-28",
-                    "Content-Security-Policy": "default-src 'self'"
+                    "Content-Security-Policy": "default-src 'self'",
                 }
-            
+
             # Enable automatic security updates (only if dependencies available)
             if YAML_AVAILABLE:
                 try:
                     self._enable_dependabot()
                 except Exception as e:
                     logger.debug(f"Could not enable dependabot: {e}")
-            
+
             self.is_configured = True
             logger.info("GitHub provider configured successfully")
-            
+
         except Exception as e:
             logger.error(f"GitHub provider configuration failed: {e}")
             self.is_configured = False
@@ -105,16 +112,14 @@ class GitHubProvider(BaseProvider):
         if not YAML_AVAILABLE:
             logger.debug("YAML not available, skipping dependabot configuration")
             return
-            
+
         config = {
             "version": 2,
-            "updates": [{
-                "package-ecosystem": "pip",
-                "directory": "/",
-                "schedule": {"interval": "daily"}
-            }]
+            "updates": [
+                {"package-ecosystem": "pip", "directory": "/", "schedule": {"interval": "daily"}}
+            ],
         }
-        
+
         try:
             self._create_repo_file(".github/dependabot.yml", yaml.dump(config))
         except Exception as e:
@@ -129,21 +134,25 @@ class GitHubProvider(BaseProvider):
         """Robust connection validation"""
         if not self.is_configured:
             return False
-        
-        # For testing, accept test tokens
+
+        # For testing, return True only if requests is not mocked to fail
         if self.token and (self.token.startswith("test_") or self.token == "test_token"):
-            return True
-            
+            if not REQUESTS_AVAILABLE:
+                return True
+            # If requests is available, still test the connection (for mocking)
+            try:
+                response = requests.get(f"{self.api_url}/rate_limit", headers=self.headers, timeout=10)
+                response.raise_for_status()
+                return True
+            except Exception:
+                return False
+
         if not REQUESTS_AVAILABLE:
             logger.warning("Requests package not available for connection validation")
             return self.is_configured
-            
+
         try:
-            response = requests.get(
-                f"{self.api_url}/rate_limit",
-                headers=self.headers,
-                timeout=10
-            )
+            response = requests.get(f"{self.api_url}/rate_limit", headers=self.headers, timeout=10)
             response.raise_for_status()
             return True
         except requests.RequestException as e:
@@ -157,14 +166,16 @@ class GitHubProvider(BaseProvider):
             "manage_issues",
             "create_releases",
         ]
-        
+
         if REQUESTS_AVAILABLE:
-            capabilities.extend([
-                "setup_ci_cd",
-                "manage_secrets",
-                "setup_webhooks",
-            ])
-        
+            capabilities.extend(
+                [
+                    "setup_ci_cd",
+                    "manage_secrets",
+                    "setup_webhooks",
+                ]
+            )
+
         return capabilities
 
     def create_repository(
@@ -173,7 +184,7 @@ class GitHubProvider(BaseProvider):
         """Secure repository creation with default protections"""
         if not self.is_configured:
             raise RuntimeError("GitHub provider not configured")
-        
+
         if not REQUESTS_AVAILABLE:
             # Mock response for testing
             return {
@@ -181,7 +192,7 @@ class GitHubProvider(BaseProvider):
                 "description": description,
                 "private": private,
                 "success": True,
-                "html_url": f"https://github.com/test/{repo_name}"
+                "html_url": f"https://github.com/test/{repo_name}",
             }
 
         try:
@@ -191,14 +202,11 @@ class GitHubProvider(BaseProvider):
                 "private": private,
                 "auto_init": True,
                 "gitignore_template": "Python",
-                "license_template": "mit"
+                "license_template": "mit",
             }
 
             response = requests.post(
-                f"{self.api_url}/user/repos",
-                headers=self.headers,
-                json=data,
-                timeout=30
+                f"{self.api_url}/user/repos", headers=self.headers, json=data, timeout=30
             )
 
             if response.status_code == 201:
@@ -211,37 +219,34 @@ class GitHubProvider(BaseProvider):
                     "private": repo_data["private"],
                     "html_url": repo_data["html_url"],
                     "clone_url": repo_data["clone_url"],
-                    "success": True
+                    "success": True,
                 }
             else:
                 raise RuntimeError(f"Failed to create repository: {response.text}")
 
         except Exception as e:
             logger.error(f"Repository creation failed: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _apply_security_settings(self, repo_name: str):
         """Apply GitHub Advanced Security features"""
         if not REQUESTS_AVAILABLE or not self.username:
             return
-            
+
         settings = {
             "security_and_analysis": {
                 "advanced_security": {"status": "enabled"},
                 "secret_scanning": {"status": "enabled"},
-                "secret_scanning_push_protection": {"status": "enabled"}
+                "secret_scanning_push_protection": {"status": "enabled"},
             }
         }
-        
+
         try:
             requests.patch(
                 f"{self.api_url}/repos/{self.username}/{repo_name}",
                 headers=self.headers,
                 json=settings,
-                timeout=30
+                timeout=30,
             )
         except Exception as e:
             logger.debug(f"Could not apply security settings: {e}")
@@ -256,10 +261,7 @@ class GitHubProvider(BaseProvider):
 
         try:
             # Create .github/workflows directory and workflow file
-            workflow_data = {
-                "message": "Add CI/CD workflow", 
-                "content": workflow_content
-            }
+            workflow_data = {"message": "Add CI/CD workflow", "content": workflow_content}
 
             url = f"{self.api_url}/repos/{self.username}/{repo_name}/contents/.github/workflows/ci.yml"
             response = requests.put(url, headers=self.headers, json=workflow_data, timeout=30)
@@ -280,7 +282,9 @@ class GitHubProvider(BaseProvider):
         success = True
         for secret_name, secret_value in secrets.items():
             try:
-                data = {"encrypted_value": secret_value}  # In practice, encrypt with repo public key
+                data = {
+                    "encrypted_value": secret_value
+                }  # In practice, encrypt with repo public key
 
                 url = f"{self.api_url}/repos/{self.username}/{repo_name}/actions/secrets/{secret_name}"
                 response = requests.put(url, headers=self.headers, json=data, timeout=30)
@@ -308,7 +312,7 @@ class GitHubProvider(BaseProvider):
                 "name": release_name,
                 "body": body,
                 "html_url": f"https://github.com/test/{repo_name}/releases/tag/{tag_name}",
-                "success": True
+                "success": True,
             }
 
         try:
@@ -329,10 +333,7 @@ class GitHubProvider(BaseProvider):
                 raise RuntimeError(f"Failed to create release: {response.text}")
         except Exception as e:
             logger.error(f"Failed to create release: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def clone_repository(self, repo_url: str, local_path: str) -> bool:
         """Clone a repository locally."""
@@ -364,12 +365,12 @@ class GitHubProvider(BaseProvider):
     # Add missing abstract methods
     async def generate_response(self, *args, **kwargs) -> Dict[str, Any]:
         raise NotImplementedError("GitHub provider doesn't support AI generation")
-    
+
     async def generate_code(self, *args, **kwargs) -> Dict[str, Any]:
         raise NotImplementedError("GitHub provider doesn't support code generation")
-    
+
     async def estimate_cost(self, *args, **kwargs) -> Dict[str, float]:
         return {"estimated_cost": 0.0}
-    
+
     async def get_model_info(self) -> Dict[str, Any]:
         return {"message": "GitHub provider doesn't use AI models"}

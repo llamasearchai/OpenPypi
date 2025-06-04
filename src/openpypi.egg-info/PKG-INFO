@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: openpypi
-Version: 0.1.dev2+g22099b3.d20250603
+Version: 1.0.1.dev0+gd1f9cbd7.d20250604
 Summary: AI-powered Python package generator with comprehensive project management capabilities
 Author-email: OpenPypi Team <team@openpypi.dev>
 Maintainer-email: OpenPypi Team <team@openpypi.dev>

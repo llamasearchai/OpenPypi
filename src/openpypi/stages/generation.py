@@ -48,18 +48,22 @@ class GenerationStage(Stage):
             generator = ProjectGenerator(validated_config)
 
             # Generate project
-            project_path = Path(output_dir) / validated_config.package_name
-            generation_results = generator.generate_project(project_path)
+            project_path = Path(output_dir) / validated_config.project_name
+            
+            # Update generator config with the correct output directory
+            generator.config.output_dir = Path(output_dir)
+            generation_results = generator.generate()
 
-            # Check if generation was successful
-            if generation_results.get("success", False):
-                logger.info(f"Project generated successfully at {project_path}")
+            # Check if generation was successful (project_dir indicates success)
+            if generation_results.get("project_dir"):
+                actual_project_path = generation_results["project_dir"]
+                logger.info(f"Project generated successfully at {actual_project_path}")
                 return StageResult(
                     stage_name=self.name,
                     status=StageStatus.SUCCESS,
-                    message=f"Project generated at {project_path}",
+                    message=f"Project generated at {actual_project_path}",
                     data={
-                        "project_path": str(project_path),
+                        "project_path": actual_project_path,
                         "generation_results": generation_results,
                         "files_created": generation_results.get("files_created", []),
                         "directories_created": generation_results.get("directories_created", []),
@@ -67,7 +71,7 @@ class GenerationStage(Stage):
                 )
             else:
                 error_msg = (
-                    f"Project generation failed: {generation_results.get('error', 'Unknown error')}"
+                    f"Project generation failed: {generation_results.get('error', 'No project directory created')}"
                 )
                 logger.error(error_msg)
                 return StageResult(

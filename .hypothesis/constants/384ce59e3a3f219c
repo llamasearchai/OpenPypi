@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/providers/__init__.py
+# hypothesis_version: 6.133.2
+
+['AIProvider', 'CloudProvider', 'DatabaseProvider', 'DockerProvider', 'GitHubProvider', 'OpenAIProvider', 'Provider', 'ProviderRegistry', 'T', 'ai', 'capabilities', 'class', 'cloud', 'database', 'description', 'docker', 'get_capabilities', 'get_provider', 'github', 'list_providers', 'module', 'name', 'openai', 'register_provider', 'registry']

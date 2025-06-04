@@ -69,7 +69,7 @@ def get_version() -> str:
 
 def check_environment() -> Dict[str, Any]:
     """Check the development environment."""
-    print("🔍 Checking development environment...")
+    print("CHECKING: Checking development environment...")
     
     checks = {
         "python_version": sys.version,
@@ -105,7 +105,7 @@ def check_environment() -> Dict[str, Any]:
 
 def run_tests() -> bool:
     """Run the test suite."""
-    print("🧪 Running test suite...")
+    print("TESTING: Running test suite...")
     
     project_root = get_project_root()
     
@@ -123,7 +123,7 @@ def run_tests() -> bool:
 
 def run_linting() -> bool:
     """Run code linting and formatting checks."""
-    print("📝 Running linting and formatting checks...")
+    print("LINTING: Running linting and formatting checks...")
     
     project_root = get_project_root()
     success = True
@@ -136,7 +136,7 @@ def run_linting() -> bool:
     ], cwd=project_root, check=False)
     if result.returncode != 0:
         success = False
-        print("❌ Black formatting check failed")
+        print("FAILED: Black formatting check failed")
     
     # Check isort
     result = run_command([
@@ -146,7 +146,7 @@ def run_linting() -> bool:
     ], cwd=project_root, check=False)
     if result.returncode != 0:
         success = False
-        print("❌ isort check failed")
+        print("FAILED: isort check failed")
     
     # Run flake8
     result = run_command([
@@ -155,7 +155,7 @@ def run_linting() -> bool:
     ], cwd=project_root, check=False)
     if result.returncode != 0:
         success = False
-        print("❌ flake8 check failed")
+        print("FAILED: flake8 check failed")
     
     # Run pylint
     result = run_command([
@@ -164,7 +164,7 @@ def run_linting() -> bool:
     ], cwd=project_root, check=False)
     if result.returncode not in [0, 28]:  # 28 is warning level
         success = False
-        print("❌ pylint check failed")
+        print("FAILED: pylint check failed")
     
     # Run mypy
     result = run_command([
@@ -173,14 +173,14 @@ def run_linting() -> bool:
     ], cwd=project_root, check=False)
     if result.returncode != 0:
         success = False
-        print("❌ mypy check failed")
+        print("FAILED: mypy check failed")
     
     return success
 
 
 def run_security_checks() -> bool:
     """Run security checks."""
-    print("🔒 Running security checks...")
+    print("SECURITY: Running security checks...")
     
     project_root = get_project_root()
     success = True
@@ -194,7 +194,7 @@ def run_security_checks() -> bool:
     ], cwd=project_root, check=False)
     if result.returncode != 0:
         success = False
-        print("❌ bandit security check failed")
+        print("FAILED: bandit security check failed")
     
     # Run safety
     result = run_command([
@@ -205,14 +205,14 @@ def run_security_checks() -> bool:
     ], cwd=project_root, check=False)
     if result.returncode != 0:
         success = False
-        print("❌ safety security check failed")
+        print("FAILED: safety security check failed")
     
     return success
 
 
 def build_package() -> bool:
     """Build the package distribution."""
-    print("📦 Building package...")
+    print("BUILDING: Building package...")
     
     project_root = get_project_root()
     
@@ -231,7 +231,7 @@ def build_package() -> bool:
     ], cwd=project_root, check=False)
     
     if result.returncode != 0:
-        print("❌ Package build failed")
+        print("FAILED: Package build failed")
         return False
     
     # Check built package
@@ -241,22 +241,22 @@ def build_package() -> bool:
     ], cwd=project_root, check=False)
     
     if result.returncode != 0:
-        print("❌ Package validation failed")
+        print("FAILED: Package validation failed")
         return False
     
-    print("✅ Package built successfully")
+    print("SUCCESS: Package built successfully")
     return True
 
 
 def publish_test() -> bool:
     """Publish to TestPyPI."""
-    print("🚀 Publishing to TestPyPI...")
+    print("PUBLISHING: Publishing to TestPyPI...")
     
     project_root = get_project_root()
     
     # Check for TestPyPI token
     if not os.getenv("TEST_PYPI_TOKEN"):
-        print("❌ TEST_PYPI_TOKEN environment variable not set")
+        print("FAILED: TEST_PYPI_TOKEN environment variable not set")
         print("   Get a token from https://test.pypi.org/manage/account/token/")
         return False
     
@@ -269,23 +269,23 @@ def publish_test() -> bool:
     ], cwd=project_root, check=False)
     
     if result.returncode != 0:
-        print("❌ TestPyPI upload failed")
+        print("FAILED: TestPyPI upload failed")
         return False
     
-    print("✅ Successfully published to TestPyPI")
+    print("SUCCESS: Successfully published to TestPyPI")
     print(f"   Test installation: pip install -i https://test.pypi.org/simple/ openpypi=={get_version()}")
     return True
 
 
 def publish_pypi() -> bool:
     """Publish to PyPI."""
-    print("🚀 Publishing to PyPI...")
+    print("PUBLISHING: Publishing to PyPI...")
     
     project_root = get_project_root()
     
     # Check for PyPI token
     if not os.getenv("PYPI_TOKEN"):
-        print("❌ PYPI_TOKEN environment variable not set")
+        print("FAILED: PYPI_TOKEN environment variable not set")
         print("   Get a token from https://pypi.org/manage/account/token/")
         return False
     
@@ -293,7 +293,7 @@ def publish_pypi() -> bool:
     version = get_version()
     response = input(f"Are you sure you want to publish openpypi v{version} to PyPI? (yes/no): ")
     if response.lower() != "yes":
-        print("❌ Publication cancelled")
+        print("CANCELLED: Publication cancelled")
         return False
     
     result = run_command([
@@ -305,10 +305,10 @@ def publish_pypi() -> bool:
     ], cwd=project_root, check=False)
     
     if result.returncode != 0:
-        print("❌ PyPI upload failed")
+        print("FAILED: PyPI upload failed")
         return False
     
-    print("✅ Successfully published to PyPI")
+    print("SUCCESS: Successfully published to PyPI")
     print(f"   Installation: pip install openpypi=={version}")
     print(f"   PyPI page: https://pypi.org/project/openpypi/{version}/")
     return True
@@ -327,19 +327,19 @@ def main():
     
     args = parser.parse_args()
     
-    print(f"🚀 OpenPypi Publishing Script v{get_version()}")
+    print(f"STARTING: OpenPypi Publishing Script v{get_version()}")
     print("=" * 50)
     
     if args.command == "check":
         checks = check_environment()
-        print("\n📋 Environment Check Results:")
+        print("\nREPORT: Environment Check Results:")
         print(f"Python Version: {checks['python_version']}")
         print(f"Working Directory: {checks['working_directory']}")
         print(f"Git Status: {checks['git_status']}")
         
         print("\nDependencies:")
         for dep, version in checks["dependencies"].items():
-            status = "✅" if version != "not_installed" else "❌"
+            status = "AVAILABLE" if version != "not_installed" else "MISSING"
             print(f"  {status} {dep}: {version}")
         
         return 0
@@ -387,7 +387,7 @@ def main():
             success &= run_security_checks()
         
         if not success and not args.force:
-            print("❌ Checks failed. Use --force to ignore.")
+            print("FAILED: Checks failed. Use --force to ignore.")
             return 1
         
         # Build package

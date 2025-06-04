@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/p2_architect.py
+# hypothesis_version: 6.133.2
+
+[0.6, 'Core functionality', 'Core tests', 'Custom exceptions', 'Utility functions', 'Utility tests', '__init__.py', 'api_design', 'console_scripts', 'content', 'core', 'core.py', 'dependencies', 'dev', 'dev_dependencies', 'entry_points', 'exceptions.py', 'optional', 'p1_concept', 'p2_architecture', 'package_structure', 'public_classes', 'public_functions', 'pytest>=7.0.0', 'test_core.py', 'test_utils.py', 'tests/', 'utils.py']

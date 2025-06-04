@@ -62,27 +62,27 @@ RATE_LIMIT_BURST=10
         test_env = env_template.replace("your_openai_api_key_here", "sk-test-123456789")
         test_env = test_env.replace("your_", "test_")
         Path(".env").write_text(test_env)
-        print("✅ Created .env file with test defaults")
+        print("SUCCESS: Created .env file with test defaults")
     
-    print("✅ Environment template created")
+    print("SUCCESS: Environment template created")
 
 def run_command(cmd: str, check: bool = True) -> bool:
     """Run a command and return success status."""
-    print(f"🔧 Running: {cmd}")
+    print(f"RUNNING: {cmd}")
     try:
         result = subprocess.run(cmd, shell=True, check=check, capture_output=True, text=True)
         if result.stdout.strip():
-            print(f"✅ {result.stdout.strip()}")
+            print(f"SUCCESS: {result.stdout.strip()}")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Command failed: {e}")
+        print(f"FAILED: Command failed: {e}")
         if e.stderr:
             print(f"Error: {e.stderr}")
         return False
 
 def install_dependencies():
     """Install all required dependencies."""
-    print("\n📦 Installing dependencies...")
+    print("\nINSTALLING: Installing dependencies...")
     
     commands = [
         "pip install --upgrade pip",
@@ -94,13 +94,13 @@ def install_dependencies():
     
     for cmd in commands:
         if not run_command(cmd, check=False):
-            print(f"⚠️  Failed to run: {cmd}")
+            print(f"WARNING: Failed to run: {cmd}")
             
-    print("✅ Dependencies installation completed")
+    print("SUCCESS: Dependencies installation completed")
 
 def run_tests():
     """Run the test suite."""
-    print("\n🧪 Running tests...")
+    print("\nTESTING: Running tests...")
     
     # Clean up test artifacts first
     for pattern in [".coverage*", "htmlcov", ".pytest_cache"]:
@@ -114,15 +114,15 @@ def run_tests():
     success = run_command("python -m pytest tests/ -v --tb=short --no-cov", check=False)
     
     if success:
-        print("✅ All tests passed!")
+        print("SUCCESS: All tests passed!")
     else:
-        print("⚠️  Some tests failed, but continuing...")
+        print("WARNING: Some tests failed, but continuing...")
     
     return success
 
 def format_code():
     """Format code using black and isort."""
-    print("\n🎨 Formatting code...")
+    print("\nFORMATTING: Formatting code...")
     
     commands = [
         "python -m black src tests --line-length 100",
@@ -132,11 +132,11 @@ def format_code():
     for cmd in commands:
         run_command(cmd, check=False)
     
-    print("✅ Code formatting completed")
+    print("SUCCESS: Code formatting completed")
 
 def build_package():
     """Build the package."""
-    print("\n📦 Building package...")
+    print("\nBUILDING: Building package...")
     
     # Clean previous builds
     for pattern in ["build", "dist", "*.egg-info"]:
@@ -147,17 +147,17 @@ def build_package():
     # Build package
     if run_command("python -m build"):
         dist_files = list(Path("dist").glob("*"))
-        print(f"✅ Built {len(dist_files)} distribution files:")
+        print(f"SUCCESS: Built {len(dist_files)} distribution files:")
         for file in dist_files:
-            print(f"   📦 {file.name}")
+            print(f"   PACKAGE: {file.name}")
         return True
     else:
-        print("❌ Package build failed")
+        print("FAILED: Package build failed")
         return False
 
 def main():
     """Main deployment function."""
-    print("🚀 Starting OpenPypi deployment...")
+    print("STARTING: OpenPypi deployment...")
     
     start_time = time.time()
     
@@ -180,16 +180,16 @@ def main():
     end_time = time.time()
     duration = end_time - start_time
     
-    print(f"\n📊 Deployment Summary (completed in {duration:.1f}s):")
-    print(f"  Environment: ✅ Created")
-    print(f"  Dependencies: ✅ Installed")
-    print(f"  Code formatting: ✅ Applied")
-    print(f"  Tests: {'✅ Passed' if tests_passed else '⚠️  Issues found'}")
-    print(f"  Package build: {'✅ Success' if build_success else '❌ Failed'}")
+    print(f"\nSUMMARY: Deployment Summary (completed in {duration:.1f}s):")
+    print(f"  Environment: SUCCESS: Created")
+    print(f"  Dependencies: SUCCESS: Installed")
+    print(f"  Code formatting: SUCCESS: Applied")
+    print(f"  Tests: {'SUCCESS: Passed' if tests_passed else 'WARNING: Issues found'}")
+    print(f"  Package build: {'SUCCESS: Success' if build_success else 'FAILED: Failed'}")
     
     if build_success:
-        print("\n🎉 Deployment completed successfully!")
-        print("\n📋 Next steps:")
+        print("\nSUCCESS: Deployment completed successfully!")
+        print("\nNEXT STEPS:")
         print("1. Update .env with your actual API keys")
         print("2. Test the package:")
         print("   python -c 'import openpypi; print(\"Package imported successfully!\")'")
@@ -203,16 +203,16 @@ def main():
         print("   python scripts/complete_setup.py")
         
         # Create a simple verification test
-        print("\n🔍 Running quick verification...")
+        print("\nVERIFYING: Running quick verification...")
         try:
             import sys
             sys.path.insert(0, 'src')
             import openpypi
-            print("✅ Package can be imported successfully!")
+            print("SUCCESS: Package can be imported successfully!")
         except ImportError as e:
-            print(f"⚠️  Package import issue: {e}")
+            print(f"WARNING: Package import issue: {e}")
     else:
-        print("\n❌ Deployment completed with issues.")
+        print("\nFAILED: Deployment completed with issues.")
         print("Please review the errors above and run again.")
         sys.exit(1)
 

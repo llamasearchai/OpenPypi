@@ -284,10 +284,10 @@ jobs:
     - name: Notify on success
       if: needs.test.result == 'success'
       run: |
-        echo "All checks passed! ✅"
+        echo "All checks passed!"
         
     - name: Notify on failure
       if: needs.test.result == 'failure' || needs.security.result == 'failure'
       run: |
-        echo "Some checks failed! ❌"
+        echo "Some checks failed!"
         # Add notification logic here (Slack, Discord, email, etc.) 

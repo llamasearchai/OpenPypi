@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/p6_deployer.py
+# hypothesis_version: 6.133.2
+
+[493, '.dockerignore', '.github', '.gitlab-ci.yml', 'DEBUG', 'Dockerfile', 'ENVIRONMENT', 'Procfile', 'addons', 'app.json', 'auto_deploy', 'aws', 'azure', 'azure-pipelines.yml', 'buildspec.yml', 'ci-cd.yml', 'cicd', 'cloud', 'cloudbuild.yaml', 'deploy.sh', 'deployment', 'deployment.md', 'deployment_configs', 'deployment_ready', 'deployment_targets', 'description', 'docker', 'docker-compose.yml', 'docs', 'env', 'environment', 'false', 'fastapi', 'formation', 'gcp', 'github_workflow', 'gitlab_ci', 'heroku', 'hobby', 'keywords', 'name', 'notifications', 'p1_concept', 'p4_validation', 'p5_documentation', 'p6_deployment', 'production', 'pypi', 'python', 'quantity', 'repository', 'scripts', 'setup.sh', 'size', 'targets', 'web', 'workflows']

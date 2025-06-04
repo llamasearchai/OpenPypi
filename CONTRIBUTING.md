@@ -31,14 +31,14 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 We welcome various types of contributions:
 
-- 🐛 **Bug Reports**: Report issues and bugs
-- 💡 **Feature Requests**: Suggest new features or improvements
-- 📝 **Documentation**: Improve documentation and examples
-- 🧪 **Testing**: Add or improve tests
-- 🔧 **Code**: Fix bugs or implement new features
-- 🎨 **Design**: Improve UI/UX for generated projects
-- 🌐 **Translations**: Help translate documentation
-- 📦 **Providers**: Add new external service integrations
+- **Bug Reports**: Report issues and bugs
+- **Feature Requests**: Suggest new features or improvements
+- **Documentation**: Improve documentation and examples
+- **Testing**: Add or improve tests
+- **Code**: Fix bugs or implement new features
+- **Design**: Improve UI/UX for generated projects
+- **Translations**: Help translate documentation
+- **Providers**: Add new external service integrations
 
 ## Development Setup
 

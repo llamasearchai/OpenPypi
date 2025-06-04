@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/projects.py
+# hypothesis_version: 6.133.2
+
+[100, 404, 501, '/{package_name}', '0.1.0', '1.2.3', 'Delete Project', 'Dev Team', 'Get Project Details', 'Project not found', 'Test User', 'another_cool_project', 'deployed', 'description', 'example_project_1', 'generated', 'model', 'status']

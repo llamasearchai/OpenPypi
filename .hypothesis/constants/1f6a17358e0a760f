@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/_version.py
+# hypothesis_version: 6.133.2
+
+['__version__', '__version_tuple__', 'dev0', 'gd1f9cbd7.d20250604', 'version', 'version_tuple']

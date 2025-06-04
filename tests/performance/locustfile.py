@@ -244,7 +244,7 @@ class StressTestUser(HttpUser):
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
     """Called when the test starts."""
-    print("🚀 Starting OpenPypi API performance tests...")
+    print("STARTING: OpenPypi API performance tests...")
     print(f"Target host: {environment.host}")
     print(f"Number of users: {environment.runner.target_user_count}")
 
@@ -266,10 +266,10 @@ def on_test_stop(environment, **kwargs):
 
     # Check for performance thresholds
     if stats.total.avg_response_time > 1000:  # 1 second
-        print("⚠️  WARNING: Average response time exceeds 1 second!")
+        print("WARNING: Average response time exceeds 1 second!")
 
     if stats.total.num_failures / stats.total.num_requests > 0.05:  # 5% error rate
-        print("⚠️  WARNING: Error rate exceeds 5%!")
+        print("WARNING: Error rate exceeds 5%!")
 
     print("\nDetailed statistics saved to locust report files.")
 

@@ -1,77 +1,44 @@
-# Include documentation and configuration files
+# Include documentation
 include README.md
 include LICENSE
 include CHANGELOG.md
 include CONTRIBUTING.md
+
+# Include configuration files
 include pyproject.toml
+include requirements*.txt
 
-# Include package source files
-recursive-include src/openpypi *.py
+# Include all package data
 recursive-include src/openpypi/templates *
-recursive-include src/openpypi/data *
 
-# Include type stubs
-recursive-include src/openpypi *.pyi
+# Include documentation
+recursive-include docs *.md *.rst *.txt
 
-# Include data files
-recursive-include src/openpypi *.json
-recursive-include src/openpypi *.yaml
-recursive-include src/openpypi *.yml
-recursive-include src/openpypi *.toml
+# Include tests in source distributions
+recursive-include tests *.py *.json *.yaml *.toml
 
-# Exclude build artifacts and caches
-exclude .gitignore
-global-exclude __pycache__/*
+# Exclude unnecessary files
 global-exclude *.py[cod]
-global-exclude *$py.class
+global-exclude __pycache__
 global-exclude *.so
 global-exclude .DS_Store
-global-exclude Thumbs.db
+global-exclude .git*
+global-exclude .coverage*
+global-exclude .pytest_cache
+global-exclude .mypy_cache
+global-exclude .ruff_cache
+global-exclude htmlcov
 
-# Exclude development files
-exclude .pre-commit-config.yaml
-exclude .github/*
-exclude scripts/*
-exclude tests/*
-exclude docs/*
-exclude examples/*
-exclude projects/*
-exclude simple_app/*
-exclude logs/*
+# Explicitly exclude virtual environments
+prune venv
+prune env
+prune .venv
+prune .env
+prune build
+prune dist
+prune *.egg-info
 
-# Exclude virtual environment
-exclude venv/*
-exclude env/*
-exclude .env
-exclude .venv/*
-
-# Exclude IDE files
-exclude .vscode/*
-exclude .idea/*
-exclude *.sublime-*
-
-# Exclude build and distribution
-exclude build/*
-exclude dist/*
-exclude *.egg-info/*
-
-# Exclude coverage and test artifacts
-exclude .coverage
-exclude coverage.xml
-exclude htmlcov/*
-exclude .pytest_cache/*
-exclude .mypy_cache/*
-exclude .tox/*
-
-# Exclude Docker files
-exclude Dockerfile
-exclude docker-compose.yml
-exclude .dockerignore
-
-# Exclude other artifacts
-exclude bandit-report.json
-exclude safety-report.json
-exclude master_solution.log
-exclude coverage.json
-exclude METAPROMPT_ANALYSIS.md
-exclude main.txt 
+# Exclude other unnecessary directories
+prune .github
+prune .tox
+prune node_modules 

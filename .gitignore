@@ -1,0 +1,63 @@
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Pytest cache
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
+
+# Mac files
+.DS_Store
+
+# Logs
+logs/
+
+# Coverage reports
+coverage.xml
+coverage.json
+htmlcov/
+
+# Security reports
+test-results.xml
+security-report.json
+trivy-report.json
+pip-audit-report.json
+safety-report.json
+
+# Benchmark results
+benchmark-results.json 

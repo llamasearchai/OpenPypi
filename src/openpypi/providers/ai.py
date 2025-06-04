@@ -128,23 +128,26 @@ class AIProvider(AIBaseProvider):
     def _extract_recommendations(self, content: str) -> List[str]:
         """Extract recommendations from review content."""
         # Simple extraction logic - could be enhanced with NLP
-        lines = content.split('\n')
+        lines = content.split("\n")
         recommendations = []
-        
+
         for line in lines:
             line = line.strip()
-            if any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'should', 'consider']):
+            if any(
+                keyword in line.lower()
+                for keyword in ["recommend", "suggest", "should", "consider"]
+            ):
                 recommendations.append(line)
-        
+
         return recommendations[:10]  # Limit to top 10
 
     def _assess_severity(self, content: str) -> str:
         """Assess severity level from review content."""
         content_lower = content.lower()
-        
-        if any(keyword in content_lower for keyword in ['critical', 'severe', 'major security']):
+
+        if any(keyword in content_lower for keyword in ["critical", "severe", "major security"]):
             return "high"
-        elif any(keyword in content_lower for keyword in ['moderate', 'minor', 'warning']):
+        elif any(keyword in content_lower for keyword in ["moderate", "minor", "warning"]):
             return "medium"
         else:
             return "low"
@@ -212,10 +215,10 @@ class AIProvider(AIBaseProvider):
     def _assess_priority(self, content: str) -> str:
         """Assess priority level from analysis content."""
         content_lower = content.lower()
-        
-        if any(keyword in content_lower for keyword in ['urgent', 'critical', 'immediately']):
+
+        if any(keyword in content_lower for keyword in ["urgent", "critical", "immediately"]):
             return "high"
-        elif any(keyword in content_lower for keyword in ['soon', 'important', 'should']):
+        elif any(keyword in content_lower for keyword in ["soon", "important", "should"]):
             return "medium"
         else:
             return "low"
@@ -276,14 +279,14 @@ class AIProvider(AIBaseProvider):
     def _extract_workflow_steps(self, content: str) -> List[str]:
         """Extract workflow steps from content."""
         # Simple extraction logic
-        lines = content.split('\n')
+        lines = content.split("\n")
         steps = []
-        
+
         for line in lines:
             line = line.strip()
-            if line and (line[0].isdigit() or line.startswith('-') or line.startswith('*')):
+            if line and (line[0].isdigit() or line.startswith("-") or line.startswith("*")):
                 steps.append(line)
-        
+
         return steps[:20]  # Limit to reasonable number
 
     def _extract_tools_required(self, content: str) -> List[str]:
@@ -350,15 +353,15 @@ class AIProvider(AIBaseProvider):
             "gpt-4": 0.03,
             "gpt-4-turbo": 0.01,
         }
-        
+
         base_cost = cost_per_1k_tokens.get(self.model, 0.002)
         estimated_cost = (tokens / 1000) * base_cost
-        
+
         return {
             "estimated_cost": estimated_cost,
             "currency": "USD",
             "model": self.model,
-            "tokens": tokens
+            "tokens": tokens,
         }
 
     async def get_model_info(self) -> Dict[str, Any]:
@@ -368,7 +371,7 @@ class AIProvider(AIBaseProvider):
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "provider": "openai",
-            "capabilities": self.get_capabilities()
+            "capabilities": self.get_capabilities(),
         }
 
 

@@ -114,7 +114,6 @@ async def delete_project(package_name: str, api_key: str = Depends(get_api_key))
     logger.info(f"Attempting to delete project: {package_name}")
     # Placeholder - Deletion logic would go here (file system, database, etc.)
     # For now, we'll just check if it exists in our mock DB and simulate removal.
-    global _mock_projects_db
     project_index = -1
     for i, proj in enumerate(_mock_projects_db):
         if proj.package_name == package_name:

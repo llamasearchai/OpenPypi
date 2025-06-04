@@ -49,8 +49,8 @@ class TestProviderRegistry:
             def get_capabilities(self) -> list:
                 return ["test_capability"]
 
-        # Provider should be registered in global registry
-        assert "testprovider" in registry._providers
+        # Provider should be registered in global registry  
+        assert "test" in registry._providers
 
     def test_get_provider(self):
         """Test getting a provider instance."""
@@ -63,7 +63,7 @@ class TestProviderRegistry:
 
     def test_get_unknown_provider(self):
         """Test getting unknown provider raises error."""
-        with pytest.raises(ValueError, match="Unknown provider"):
+        with pytest.raises(ValueError, match="Provider.*not found"):
             registry.get_provider("unknown_provider")
 
     def test_list_providers(self):

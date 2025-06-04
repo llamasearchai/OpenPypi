@@ -438,7 +438,7 @@ class MasterSolution:
         
     def run(self) -> bool:
         """Run the master solution loop."""
-        logger.info("🚀 Starting OpenPypi Master Solution")
+        logger.info("STARTING: OpenPypi Master Solution")
         logger.info(f"Project root: {self.project_root}")
         logger.info(f"Mode: {self.mode}")
         
@@ -452,7 +452,7 @@ class MasterSolution:
             while self.iteration_count < self.max_iterations:
                 self.iteration_count += 1
                 logger.info(f"\n{'='*60}")
-                logger.info(f"🔄 ITERATION {self.iteration_count}/{self.max_iterations}")
+                logger.info(f"ITERATION {self.iteration_count}/{self.max_iterations}")
                 logger.info(f"{'='*60}")
                 
                 # Run tests and capture results
@@ -460,7 +460,7 @@ class MasterSolution:
                 
                 # If tests pass, we're done!
                 if test_result.success and test_result.failed_count == 0:
-                    logger.info("🎉 ALL TESTS PASSED!")
+                    logger.info("SUCCESS: ALL TESTS PASSED!")
                     success = True
                     break
                 
@@ -470,17 +470,17 @@ class MasterSolution:
                 )
                 
                 if not any(categorized_errors.values()):
-                    logger.warning("❌ No recognizable error patterns found")
+                    logger.warning("FAILED: No recognizable error patterns found")
                     break
                 
                 # Apply fixes
                 fixes_applied = self._apply_fixes(categorized_errors)
                 
                 if not fixes_applied:
-                    logger.warning("❌ No fixes could be applied")
+                    logger.warning("FAILED: No fixes could be applied")
                     break
                 
-                logger.info(f"✅ Applied {fixes_applied} fixes, running tests again...")
+                logger.info(f"SUCCESS: Applied {fixes_applied} fixes, running tests again...")
             
             # Final summary
             self._generate_final_summary(success)
@@ -488,13 +488,13 @@ class MasterSolution:
         except KeyboardInterrupt:
             logger.info("\n⏹️  Process interrupted by user")
         except Exception as e:
-            logger.error(f"❌ Unexpected error: {e}")
+            logger.error(f"ERROR: Unexpected error: {e}")
         
         return success
     
     def _initial_setup(self) -> None:
         """Perform initial setup tasks."""
-        logger.info("🔧 Performing initial setup...")
+        logger.info("SETUP: Performing initial setup...")
         
         # Ensure required directories exist
         required_dirs = [
@@ -525,7 +525,7 @@ class MasterSolution:
     
     def _run_tests(self) -> TestResult:
         """Run the test suite and capture results."""
-        logger.info("🧪 Running test suite...")
+        logger.info("TESTING: Running test suite...")
         
         cmd = [
             sys.executable, '-m', 'pytest',
@@ -566,7 +566,7 @@ class MasterSolution:
                 skipped_count=0
             )
             
-            logger.info(f"📊 Test Results: {passed_count} passed, {failed_count} failed, Coverage: {coverage_percent:.1f}%")
+            logger.info(f"RESULTS: Test Results: {passed_count} passed, {failed_count} failed, Coverage: {coverage_percent:.1f}%")
             
             return test_result
             
@@ -587,7 +587,7 @@ class MasterSolution:
             )
         
         except Exception as e:
-            logger.error(f"❌ Error running tests: {e}")
+            logger.error(f"ERROR: Error running tests: {e}")
             return TestResult(
                 success=False,
                 exit_code=-1,
@@ -623,7 +623,7 @@ class MasterSolution:
             if error_type not in categorized_errors or not categorized_errors[error_type]:
                 continue
             
-            logger.info(f"🔧 Fixing {error_type} errors...")
+            logger.info(f"FIXING: Fixing {error_type} errors...")
             
             fixes = []
             if error_type == 'import_error':
@@ -637,10 +637,10 @@ class MasterSolution:
             
             for fix in fixes:
                 if fix.applied:
-                    logger.info(f"  ✅ {fix.description}")
+                    logger.info(f"  SUCCESS: {fix.description}")
                     total_fixes += 1
                 else:
-                    logger.warning(f"  ❌ {fix.description}: {fix.error}")
+                    logger.warning(f"  FAILED: {fix.description}: {fix.error}")
         
         return total_fixes
     
@@ -696,25 +696,25 @@ class MasterSolution:
     def _generate_final_summary(self, success: bool) -> None:
         """Generate and display final summary."""
         logger.info(f"\n{'='*60}")
-        logger.info("📋 FINAL SUMMARY")
+        logger.info("SUMMARY: FINAL SUMMARY")
         logger.info(f"{'='*60}")
         
         if success:
-            logger.info("🎉 SUCCESS: All tests are now passing!")
-            logger.info("✅ Your OpenPypi project is fully functional")
+            logger.info("SUCCESS: All tests are now passing!")
+            logger.info("SUCCESS: Your OpenPypi project is fully functional")
         else:
-            logger.info("⚠️  PARTIAL SUCCESS: Some issues may remain")
-            logger.info(f"🔄 Completed {self.iteration_count} iterations")
+            logger.info("WARNING: PARTIAL SUCCESS: Some issues may remain")
+            logger.info(f"ITERATION Completed {self.iteration_count} iterations")
         
         # Run final test to get stats
         final_result = self._run_tests()
         
-        logger.info(f"\n📊 Final Test Statistics:")
+        logger.info(f"\nSTATISTICS: Final Test Statistics:")
         logger.info(f"   Tests: {final_result.passed_count} passed, {final_result.failed_count} failed")
         logger.info(f"   Coverage: {final_result.coverage_percent:.1f}%")
         
         # Recommendations
-        logger.info(f"\n💡 Recommendations:")
+        logger.info(f"\nRECOMMENDATIONS:")
         if final_result.coverage_percent < 80:
             logger.info("   - Consider adding more tests to improve coverage")
         if final_result.failed_count > 0:
@@ -744,7 +744,7 @@ def main():
     
     # Ensure we're in the right directory
     if not (args.project_root / "pyproject.toml").exists():
-        logger.error("❌ pyproject.toml not found. Please run from the project root.")
+        logger.error("ERROR: pyproject.toml not found. Please run from the project root.")
         sys.exit(1)
     
     solution = MasterSolution(args.project_root, args.mode)
