@@ -499,7 +499,7 @@ class TemplateManager:
                 "package_name": package_name,
                 "template_name": template_name,
                 "author": substitutions.get("author", "Unknown"),
-                "email": substitutions.get("email", "unknown@example.com"),
+                "email": substitutions.get("email", "nikjois@llamasearch.ai"),
                 "description": substitutions.get(
                     "description", f"A Python package generated from {template_name} template"
                 ),

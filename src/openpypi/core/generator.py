@@ -2,16 +2,21 @@
 Main project generator for OpenPypi.
 """
 
+import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from jinja2 import Environment, FileSystemLoader, Template
 
 from ..utils.formatters import ConfigFormatter
 from ..utils.formatters import ProjectGenerator as BaseProjectGenerator
 from ..utils.logger import get_logger
 from .config import Config
 from .exceptions import GenerationError
+from ..templates import get_template_path
 
 logger = get_logger(__name__)
 
@@ -26,6 +31,23 @@ class ProjectGenerator:
         self.project_name = config.project_name
         self.package_name = config.package_name
         self.templates_dir = Path(__file__).parent.parent / "templates"
+        self.template_env = self._setup_template_environment()
+        self.results = {
+            "project_dir": None,
+            "files_created": [],
+            "directories_created": [],
+            "commands_run": [],
+            "warnings": []
+        }
+
+    def _setup_template_environment(self) -> Environment:
+        """Setup Jinja2 template environment."""
+        template_path = get_template_path()
+        return Environment(
+            loader=FileSystemLoader(template_path),
+            trim_blocks=True,
+            lstrip_blocks=True
+        )
 
     def generate(self) -> Dict[str, Any]:
         """Generate a complete Python project."""
@@ -34,115 +56,105 @@ class ProjectGenerator:
             self.config.validate()
 
             # Create project directory
-            project_dir = self.config.output_dir / self.config.project_name
-            project_dir.mkdir(parents=True, exist_ok=True)
+            project_dir = self._create_project_directory()
+            self.results["project_dir"] = str(project_dir)
 
             logger.info(f"Generating project in {project_dir}")
 
-            results = {
-                "project_dir": str(project_dir),
-                "files_created": [],
-                "directories_created": [],
-                "commands_run": [],
-                "warnings": [],
-            }
-
-            # Generate basic project structure
-            structure_results = self._create_project_structure(project_dir)
-            self._merge_results(results, structure_results)
+            # Generate project structure
+            self._generate_project_structure(project_dir)
 
             # Generate configuration files
             config_results = self._create_config_files(project_dir)
-            self._merge_results(results, config_results)
+            self._merge_results(self.results, config_results)
 
             # Generate source code
             source_results = self._create_source_code(project_dir)
-            self._merge_results(results, source_results)
+            self._merge_results(self.results, source_results)
 
             # Generate tests
             if self.config.create_tests:
                 test_results = self._create_tests(project_dir)
-                self._merge_results(results, test_results)
+                self._merge_results(self.results, test_results)
 
             # Generate documentation
             docs_results = self._create_documentation(project_dir)
-            self._merge_results(results, docs_results)
+            self._merge_results(self.results, docs_results)
 
             # Generate Docker files
             if self.config.use_docker:
                 docker_results = self._create_docker_files(project_dir)
-                self._merge_results(results, docker_results)
+                self._merge_results(self.results, docker_results)
 
             # Generate CI/CD files
             if self.config.use_github_actions:
                 ci_results = self._create_ci_files(project_dir)
-                self._merge_results(results, ci_results)
+                self._merge_results(self.results, ci_results)
 
             # Initialize git repository
             if self.config.use_git:
                 git_results = self._initialize_git(project_dir)
-                self._merge_results(results, git_results)
+                self._merge_results(self.results, git_results)
 
             # Install dependencies
-            install_results = self._install_dependencies(project_dir)
-            self._merge_results(results, install_results)
+            self._install_dependencies(project_dir)
 
             logger.info("Project generation completed successfully")
-            return results
+            return self.results
 
         except Exception as e:
             logger.error(f"Project generation failed: {e}")
             raise GenerationError(f"Failed to generate project: {e}")
 
-    def _create_project_structure(self, project_dir: Path) -> Dict[str, Any]:
-        """Create basic project directory structure."""
-        results = {"files_created": [], "directories_created": [], "warnings": []}
+    def _create_project_directory(self) -> Path:
+        """Create the main project directory."""
+        project_dir = self.config.output_dir / self.config.project_name
+        
+        if project_dir.exists():
+            if any(project_dir.iterdir()):
+                raise GenerationError(f"Directory '{project_dir}' already exists and is not empty")
+        
+        project_dir.mkdir(parents=True, exist_ok=True)
+        self.results["directories_created"].append(str(project_dir))
+        
+        return project_dir
 
-        # Create directories
+    def _generate_project_structure(self, project_dir: Path) -> None:
+        """Generate the basic project structure."""
         directories = [
-            Path("src") / self.config.package_name,
-            Path("tests"),
-            Path("docs"),
-            Path("scripts"),
-            Path("data"),
-            Path("configs"),
+            "src" / self.config.package_name,
+            "tests",
+            "docs",
+            "scripts",
+            "configs"
         ]
-
+        
+        # Add optional directories
         if self.config.use_fastapi:
-            directories.extend(
-                [
-                    Path("src") / self.config.package_name / "api",
-                    Path("src") / self.config.package_name / "models",
-                    Path("src") / self.config.package_name / "services",
-                ]
-            )
-
+            directories.extend([
+                "src" / self.config.package_name / "api",
+                "src" / self.config.package_name / "models",
+                "src" / self.config.package_name / "services"
+            ])
+        
+        if self.config.create_tests:
+            directories.extend([
+                "tests" / "unit",
+                "tests" / "integration",
+                "tests" / "fixtures"
+            ])
+        
+        if self.config.use_docker:
+            directories.append("docker")
+        
+        if self.config.kubernetes_enabled:
+            directories.append("k8s")
+        
+        # Create directories
         for directory in directories:
-            full_path = project_dir / directory
-            full_path.mkdir(parents=True, exist_ok=True)
-            results["directories_created"].append(str(directory))
-
-        # Create __init__.py files
-        init_files = [
-            Path("src") / self.config.package_name / "__init__.py",
-            Path("tests") / "__init__.py",
-        ]
-
-        if self.config.use_fastapi:
-            init_files.extend(
-                [
-                    Path("src") / self.config.package_name / "api" / "__init__.py",
-                    Path("src") / self.config.package_name / "models" / "__init__.py",
-                    Path("src") / self.config.package_name / "services" / "__init__.py",
-                ]
-            )
-
-        for init_file in init_files:
-            full_path = project_dir / init_file
-            full_path.write_text('"""Package initialization."""\n')
-            results["files_created"].append(str(init_file))
-
-        return results
+            dir_path = project_dir / directory
+            dir_path.mkdir(parents=True, exist_ok=True)
+            self.results["directories_created"].append(str(dir_path))
 
     def _create_config_files(self, project_dir: Path) -> Dict[str, Any]:
         """Create configuration files."""
@@ -318,41 +330,38 @@ class ProjectGenerator:
 
         return results
 
-    def _install_dependencies(self, project_dir: Path) -> Dict[str, Any]:
+    def _install_dependencies(self, project_dir: Path) -> None:
         """Install project dependencies."""
-        results = {
-            "files_created": [],
-            "directories_created": [],
-            "commands_run": [],
-            "warnings": [],
-        }
-
+        if not self.config.dependencies and not self.config.dev_dependencies:
+            return
+        
         try:
             # Create virtual environment
+            venv_path = project_dir / "venv"
             subprocess.run(
-                ["python", "-m", "venv", "venv"], cwd=project_dir, check=True, capture_output=True
+                [sys.executable, "-m", "venv", str(venv_path)],
+                check=True,
+                capture_output=True
             )
-            results["commands_run"].append("python -m venv venv")
-
-            # Install in development mode
-            pip_cmd = str(project_dir / "venv" / "bin" / "pip")
-            if not Path(pip_cmd).exists():
-                pip_cmd = str(project_dir / "venv" / "Scripts" / "pip.exe")  # Windows
-
+            self.results["commands_run"].append("python -m venv venv")
+            
+            # Install package in development mode
+            pip_path = venv_path / "bin" / "pip" if os.name != "nt" else venv_path / "Scripts" / "pip.exe"
+            
             subprocess.run(
-                [pip_cmd, "install", "-e", ".[dev]"],
+                [str(pip_path), "install", "-e", ".[dev]"],
                 cwd=project_dir,
                 check=True,
-                capture_output=True,
+                capture_output=True
             )
-            results["commands_run"].append("pip install -e .[dev]")
-
+            self.results["commands_run"].append("pip install -e .[dev]")
+            
         except subprocess.CalledProcessError as e:
-            results["warnings"].append(f"Dependency installation failed: {e}")
-        except FileNotFoundError:
-            results["warnings"].append("Python not found - skipping dependency installation")
-
-        return results
+            logger.warning(f"Dependency installation failed: {e}")
+            self.results["warnings"].append(f"Dependency installation failed: {e}")
+        except FileNotFoundError as e:
+            logger.warning(f"Python/pip not found: {e}")
+            self.results["warnings"].append(f"Python/pip not found: {e}")
 
     def _get_dependencies(self) -> List[str]:
         """Get list of dependencies based on configuration."""

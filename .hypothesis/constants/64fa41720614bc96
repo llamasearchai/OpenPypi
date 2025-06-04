@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/app.py
+# hypothesis_version: 6.133.2
+
+[1000, '*', '/', '/api/v1/admin', '/api/v1/auth', '/api/v1/generate', '/api/v1/openapi.json', '/api/v1/packages', '/api/v1/projects', '/docs', '/health', '/redoc', '0.3.0', 'ApiKeyAuth', 'BearerAuth', 'DELETE', 'GET', 'JWT', 'OPTIONS', 'OpenPypi API', 'PATCH', 'POST', 'PUT', 'SELECT 1', 'Value error occurred', 'X-API-Key', 'X-Request-ID', '__main__', 'admin', 'apiKey', 'authentication', 'bearer', 'bearerFormat', 'components', 'description', 'detail', 'development', 'docs', 'error', 'generation', 'header', 'health', 'http', 'in', 'iso', 'message', 'name', 'openpypi.api.app:app', 'packages', 'production', 'projects', 'redoc', 'scheme', 'security', 'securitySchemes', 'timestamp', 'type', 'validation_error', 'version']

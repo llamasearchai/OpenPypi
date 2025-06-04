@@ -1,0 +1,33 @@
+author: OpenPypi
+category: cli
+dependencies:
+- click
+- rich
+- pyyaml
+description: Command-line interface application with Click
+dev_dependencies:
+- pytest
+- pytest-cov
+- black
+- flake8
+features:
+- Click CLI framework
+- Argument parsing
+- Configuration management
+- Logging setup
+- Progress bars
+- Error handling
+name: cli_tool
+structure:
+  src/{package_name}:
+    __init__.py: ''
+    __main__.py: ''
+    cli.py: ''
+    config.py: ''
+    core.py: ''
+    utils.py: ''
+  tests:
+    __init__.py: ''
+    conftest.py: ''
+    test_cli.py: ''
+    test_core.py: ''

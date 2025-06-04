@@ -51,7 +51,7 @@ from .core.context import Context
 from .core.exceptions import (
     ConfigurationError,
     GenerationError,
-    OpenPypiError,
+    OpenPypiException,
     ProviderError,
     StageError,
     ValidationError,
@@ -276,7 +276,7 @@ __all__ = [
     "Context",
     "load_config",
     # Exceptions
-    "OpenPypiError",
+    "OpenPypiException",
     "ConfigurationError",
     "ValidationError",
     "GenerationError",

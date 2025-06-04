@@ -1,18 +1,19 @@
 """
-Database package for OpenPypi with SQLAlchemy integration.
+Database module for OpenPypi
+Provides SQLAlchemy models, sessions, and utilities
 """
 
-from .database import DatabaseManager, get_db_session
-from .migrations import MigrationManager
-from .models import *
+from .session import engine, get_db, async_session
+from .models import Base, User, Project, Package, ApiKey, AuditLog
 
 __all__ = [
-    "DatabaseManager",
-    "get_db_session",
-    "MigrationManager",
+    "engine",
+    "get_db", 
+    "async_session",
+    "Base",
     "User",
-    "Project",
-    "GenerationTask",
+    "Project", 
+    "Package",
     "ApiKey",
     "AuditLog",
 ]

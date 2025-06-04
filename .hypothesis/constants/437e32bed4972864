@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/packages.py
+# hypothesis_version: 6.133.2
+
+[2.0, 404, 1024, '/', '/packages', '/{package_id}', '/{package_id}/logs', '0.1.0', 'No logs available', 'Package not found', 'building', 'description', 'failed', 'message', 'package_id', 'packages', 'pending', 'success', 'version']

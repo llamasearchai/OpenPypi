@@ -53,7 +53,7 @@ class TestGenerationComprehensive:
             "email": "test@example.com",
         }
 
-        response = client.post("/generate/sync", json=project_data)
+        response = client.post("/api/v1/generate/sync", json=project_data)
         assert response.status_code in [200, 201]
 
     def test_generate_project_async_basic(self):
@@ -65,7 +65,7 @@ class TestGenerationComprehensive:
             "email": "test@example.com",
         }
 
-        response = client.post("/generate/async", json=project_data)
+        response = client.post("/api/v1/generate/async", json=project_data)
         assert response.status_code in [200, 202]
 
         if response.status_code == 202:
@@ -91,7 +91,7 @@ class TestGenerationComprehensive:
             "email": "test@example.com",
         }
 
-        response = client.post("/generate/sync", json=project_data)
+        response = client.post("/api/v1/generate/sync", json=project_data)
         assert response.status_code in [200, 201]
 
     def test_generate_project_validation_errors(self):
@@ -99,7 +99,7 @@ class TestGenerationComprehensive:
         # Test with missing required fields
         invalid_data = {"name": "", "description": "Test"}  # Empty name should fail validation
 
-        response = client.post("/generate/sync", json=invalid_data)
+        response = client.post("/api/v1/generate/sync", json=invalid_data)
         assert response.status_code == 422  # Validation error
 
     def test_task_status_tracking(self):
@@ -112,14 +112,14 @@ class TestGenerationComprehensive:
             "email": "test@example.com",
         }
 
-        response = client.post("/generate/async", json=project_data)
+        response = client.post("/api/v1/generate/async", json=project_data)
 
         if response.status_code == 202:
             response_data = response.json()
             task_id = response_data["data"]["task_id"]
 
             # Check task status
-            status_response = client.get(f"/generate/status/{task_id}")
+            status_response = client.get(f"/api/v1/generate/status/{task_id}")
             assert status_response.status_code == 200
 
             status_data = status_response.json()
@@ -143,7 +143,7 @@ class TestGenerationComprehensive:
             },
         }
 
-        response = client.post("/generate/sync", json=project_data)
+        response = client.post("/api/v1/generate/sync", json=project_data)
         assert response.status_code in [200, 201]
 
     @pytest.mark.parametrize(
@@ -159,7 +159,7 @@ class TestGenerationComprehensive:
             "email": "test@example.com",
         }
 
-        response = client.post("/generate/sync", json=project_data)
+        response = client.post("/api/v1/generate/sync", json=project_data)
         assert response.status_code in [200, 201, 422]  # 422 if name format is invalid
 
     def test_concurrent_project_generation(self):
@@ -173,7 +173,7 @@ class TestGenerationComprehensive:
                 "author": "Test Author",
                 "email": "test@example.com",
             }
-            return client.post("/generate/sync", json=project_data)
+            return client.post("/api/v1/generate/sync", json=project_data)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = [executor.submit(generate_project, i) for i in range(5)]

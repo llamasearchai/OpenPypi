@@ -167,7 +167,7 @@ def cleanup_build_artifacts():
         for path in Path(".").glob(pattern):
             if path.is_dir():
                 shutil.rmtree(path)
-                print(f"   🗑️  Removed {path}")
+                print(f"   Removed {path}")
 
 def main():
     """Main publishing function."""

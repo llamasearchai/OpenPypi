@@ -9,7 +9,7 @@ services:
     container_name: openpypi_app
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8000"
     volumes:
       - ./src:/home/appuser/app/src # Mount src for development hot-reloading
       # - ./openpypi.toml:/home/appuser/app/openpypi.toml # Mount config if needed

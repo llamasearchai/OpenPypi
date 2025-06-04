@@ -78,10 +78,10 @@ class TestHealthEndpointsComprehensive:
 
     def test_readiness_probe(self):
         """Test Kubernetes readiness probe endpoint."""
-        response = client.get("/ready")
+        response = client.get("/health/ready")
         assert response.status_code == 200
 
     def test_liveness_probe(self):
         """Test Kubernetes liveness probe endpoint."""
-        response = client.get("/live")
+        response = client.get("/health/live")
         assert response.status_code == 200

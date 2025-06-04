@@ -1,9 +1,20 @@
 """
-API Routes for OpenPypi.
-
-This package contains all the API route definitions, organized by functionality.
+API Routes module for OpenPypi
+Exports all route handlers for the FastAPI application
 """
 
-from . import auth, generation, health, openai_integration, projects
+from .auth import router as auth_router
+from .projects import router as projects_router
+from .packages import router as packages_router
+from .health import router as health_router
+from .admin import router as admin_router
+from .generation import router as generation_router
 
-__all__ = ["auth", "generation", "health", "openai_integration", "projects"]
+__all__ = [
+    "auth_router",
+    "projects_router", 
+    "packages_router",
+    "health_router",
+    "admin_router",
+    "generation_router",
+]

@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/__init__.py
+# hypothesis_version: 6.133.2
+
+['admin_router', 'auth_router', 'generation_router', 'health_router', 'packages_router', 'projects_router']

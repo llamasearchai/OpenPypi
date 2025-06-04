@@ -60,7 +60,7 @@ def test_login_for_access_token(
     app.dependency_overrides[get_config] = override_get_config
 
     try:
-        response = client.post("/auth/token", data=test_user_credentials)
+        response = client.post("/api/v1/auth/token", data=test_user_credentials)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert "access_token" in data
@@ -85,7 +85,7 @@ def test_login_for_access_token_invalid_credentials(client: TestClient, mock_con
 
     try:
         response = client.post(
-            "/auth/token", data={"username": "wronguser", "password": "wrongpassword"}
+            "/api/v1/auth/token", data={"username": "wronguser", "password": "wrongpassword"}
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         data = response.json()
@@ -115,7 +115,7 @@ def test_register_user_success(client: TestClient, mock_config_with_api_keys):
             "email": "new@example.com",
             "full_name": "New Test User",
         }
-        response = client.post("/auth/register", json=new_user_data)
+        response = client.post("/api/v1/auth/register", json=new_user_data)
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
@@ -148,7 +148,7 @@ def test_register_user_already_exists(
             "email": "existing@example.com",
             "full_name": "Existing User",
         }
-        response = client.post("/auth/register", json=user_data)
+        response = client.post("/api/v1/auth/register", json=user_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         data = response.json()
         assert data["detail"] == "Username already registered"
@@ -175,7 +175,7 @@ def test_read_users_me(client: TestClient, test_user_credentials, mock_config_wi
     app.dependency_overrides[get_current_user] = override_get_current_user
 
     try:
-        response = client.get("/auth/users/me", headers={"X-API-Key": "test_api_key_123"})
+        response = client.get("/api/v1/auth/users/me", headers={"X-API-Key": "test_api_key_123"})
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -200,7 +200,7 @@ def test_read_users_me_invalid_key(client: TestClient, mock_config_with_api_keys
     app.dependency_overrides[get_config] = override_get_config
 
     try:
-        response = client.get("/auth/users/me", headers={"X-API-Key": "invalid_key"})
+        response = client.get("/api/v1/auth/users/me", headers={"X-API-Key": "invalid_key"})
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         data = response.json()
         assert data["detail"] == "Invalid API Key"
@@ -227,7 +227,7 @@ def test_validate_token_success(client: TestClient, mock_config_with_api_keys):
     app.dependency_overrides[get_current_user] = override_get_current_user
 
     try:
-        response = client.get("/auth/validate-token", headers={"X-API-Key": "test_api_key_123"})
+        response = client.get("/api/v1/auth/validate-token", headers={"X-API-Key": "test_api_key_123"})
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -253,7 +253,7 @@ def test_validate_token_failure(client: TestClient, mock_config_with_api_keys):
     app.dependency_overrides[get_config] = override_get_config
 
     try:
-        response = client.get("/auth/validate-token", headers={"X-API-Key": "invalid_api_key"})
+        response = client.get("/api/v1/auth/validate-token", headers={"X-API-Key": "invalid_api_key"})
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         data = response.json()

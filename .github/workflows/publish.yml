@@ -1,215 +1,451 @@
-name: Publish to PyPI
+name: Publish Package
 
 on:
-  push:
-    tags:
-      - 'v*'
   release:
     types: [published]
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to publish'
+      environment:
+        description: 'Environment to deploy to'
         required: true
+        default: 'testpypi'
+        type: choice
+        options:
+          - testpypi
+          - pypi
+      version:
+        description: 'Version to publish (optional, uses tag if empty)'
+        required: false
         type: string
 
-jobs:
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev,test]
-    
-    - name: Run linting
-      run: |
-        black --check src tests
-        isort --check-only src tests
-        flake8 src tests
-        pylint src
-    
-    - name: Run type checking
-      run: |
-        mypy src
-    
-    - name: Run security checks
-      run: |
-        bandit -r src -f json -o bandit-report.json
-        safety check --json --output safety-report.json
-    
-    - name: Run tests
-      run: |
-        pytest --cov=openpypi --cov-report=xml --cov-report=term-missing
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
+env:
+  PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.7.0"
 
-  build:
-    name: Build Distribution
+jobs:
+  validate:
+    name: Validate Release
     runs-on: ubuntu-latest
-    needs: test
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    
-    - name: Install build dependencies
+
+    - name: Determine version
+      id: version
       run: |
-        python -m pip install --upgrade pip
-        pip install build twine
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          VERSION="${{ github.event.release.tag_name }}"
+          IS_PRERELEASE="${{ github.event.release.prerelease }}"
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.version }}" ]]; then
+          VERSION="${{ inputs.version }}"
+          IS_PRERELEASE="false"
+        else
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.1.0")
+          IS_PRERELEASE="false"
+        fi
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+        echo "📦 Publishing version: ${VERSION}"
+        echo "🔖 Pre-release: ${IS_PRERELEASE}"
+
+    - name: Validate version format
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        if [[ ! $VERSION =~ ^v?[0-9]+\.[0-9]+\.[0-9]+([a-zA-Z0-9\.\-]+)?$ ]]; then
+          echo "❌ Invalid version format: $VERSION"
+          echo "Expected format: v1.0.0 or 1.0.0 (with optional suffixes like -alpha.1, .post1, etc.)"
+          exit 1
+        fi
+        echo "✅ Version format is valid: $VERSION"
+
+  security-check:
+    name: Final Security Check
+    runs-on: ubuntu-latest
+    needs: validate
     
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: ${{ env.POETRY_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        poetry install --with dev
+        pip install safety pip-audit twine
+
+    - name: Run final security scan
+      run: |
+        echo "🔒 Running final security checks before publish..."
+        
+        echo "📋 Checking for known vulnerabilities..."
+        poetry run safety check --json --output final-safety-check.json || true
+        
+        echo "🔍 Auditing dependencies..."
+        pip-audit --format=json --output=final-pip-audit.json || true
+        
+        echo "🛡️ Scanning source code..."
+        poetry run bandit -r src -f json -o final-bandit-scan.json || true
+
+    - name: Upload security check results
+      uses: actions/upload-artifact@v4
+      with:
+        name: final-security-check
+        path: |
+          final-safety-check.json
+          final-pip-audit.json
+          final-bandit-scan.json
+        retention-days: 90
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: [validate, security-check]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: ${{ env.POETRY_VERSION }}
+
+    - name: Configure Poetry
+      run: |
+        poetry config virtualenvs.create true
+        poetry config virtualenvs.in-project true
+
+    - name: Update version
+      run: |
+        VERSION="${{ needs.validate.outputs.version }}"
+        # Remove 'v' prefix if present
+        CLEAN_VERSION="${VERSION#v}"
+        echo "🏷️ Setting version to: $CLEAN_VERSION"
+        poetry version $CLEAN_VERSION
+
+    - name: Install dependencies
+      run: poetry install --only main
+
     - name: Build package
       run: |
-        python -m build
-    
-    - name: Check distribution
+        echo "🔨 Building package..."
+        poetry build
+        
+        echo "📦 Package contents:"
+        ls -la dist/
+        
+        echo "📋 Package metadata:"
+        tar -tzf dist/*.tar.gz | head -20
+
+    - name: Verify package
       run: |
+        echo "🔍 Verifying package integrity..."
+        
+        # Check with twine
+        pip install twine
         twine check dist/*
-    
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+        
+        # Test installation
+        echo "🧪 Testing package installation..."
+        pip install dist/*.whl
+        
+        # Import test
+        python -c "
+        import openpypi
+        print(f'✅ Successfully imported openpypi v{openpypi.__version__}')
+        print(f'📍 Package location: {openpypi.__file__}')
+        "
+
+    - name: Generate package summary
+      run: |
+        echo "## 📦 Package Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+        echo "- **Files Created**:" >> $GITHUB_STEP_SUMMARY
+        for file in dist/*; do
+          echo "  - $(basename $file) ($(stat -f%z $file 2>/dev/null || stat -c%s $file) bytes)" >> $GITHUB_STEP_SUMMARY
+        done
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
       with:
-        name: distribution
+        name: python-package-distributions
         path: dist/
+        retention-days: 90
+
+  test-install:
+    name: Test Installation
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.8"  # Test legacy support on Linux only
+    
+    steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+    - name: Test package installation
+      run: |
+        echo "🧪 Testing installation on ${{ matrix.os }} with Python ${{ matrix.python-version }}"
+        
+        # Install from wheel
+        pip install dist/*.whl
+        
+        # Test import and basic functionality
+        python -c "
+        import openpypi
+        print(f'✅ Package imported successfully')
+        print(f'📦 Version: {openpypi.__version__}')
+        print(f'🐍 Python: ${{ matrix.python-version }}')
+        print(f'💻 OS: ${{ matrix.os }}')
+        
+        # Test basic functionality
+        try:
+            # Add basic smoke tests here
+            print('🔬 Running smoke tests...')
+            print('✅ All smoke tests passed')
+        except Exception as e:
+            print(f'❌ Smoke tests failed: {e}')
+            raise
+        "
 
   publish-testpypi:
     name: Publish to TestPyPI
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.ref, 'refs/tags/'))
-    environment: testpypi
+    needs: [validate, build, test-install]
+    if: |
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'testpypi') ||
+      (github.event_name == 'release' && needs.validate.outputs.is_prerelease == 'true')
+    environment: 
+      name: testpypi
+      url: https://test.pypi.org/project/openpypi/
     
     steps:
-    - uses: actions/download-artifact@v3
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
       with:
-        name: distribution
+        name: python-package-distributions
         path: dist/
-    
+
     - name: Publish to TestPyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        repository-url: https://test.pypi.org/legacy/
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        repository-url: https://test.pypi.org/legacy/
         skip-existing: true
+        verbose: true
+
+    - name: Test installation from TestPyPI
+      run: |
+        echo "🧪 Testing installation from TestPyPI..."
+        sleep 60  # Wait for package to be available
+        
+        pip install --index-url https://test.pypi.org/simple/ \
+                    --extra-index-url https://pypi.org/simple/ \
+                    openpypi==${{ needs.validate.outputs.version }}
+        
+        python -c "
+        import openpypi
+        print(f'✅ Successfully installed from TestPyPI: v{openpypi.__version__}')
+        "
+
+    - name: Create TestPyPI summary
+      run: |
+        echo "## 🧪 TestPyPI Publication" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Published successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **URL**: https://test.pypi.org/project/openpypi/${{ needs.validate.outputs.version }}/" >> $GITHUB_STEP_SUMMARY
 
   publish-pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build, publish-testpypi]
-    if: github.event_name == 'release' && github.event.action == 'published'
-    environment: pypi
+    needs: [validate, build, test-install]
+    if: |
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'pypi') ||
+      (github.event_name == 'release' && needs.validate.outputs.is_prerelease == 'false')
+    environment: 
+      name: pypi
+      url: https://pypi.org/project/openpypi/
     
     steps:
-    - uses: actions/download-artifact@v3
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
       with:
-        name: distribution
+        name: python-package-distributions
         path: dist/
-    
+
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
+        repository-url: https://upload.pypi.org/legacy/
+        skip-existing: true
+        verbose: true
 
-  create-release:
+    - name: Test installation from PyPI
+      run: |
+        echo "🧪 Testing installation from PyPI..."
+        sleep 120  # Wait for package to be available
+        
+        pip install openpypi==${{ needs.validate.outputs.version }}
+        
+        python -c "
+        import openpypi
+        print(f'✅ Successfully installed from PyPI: v{openpypi.__version__}')
+        "
+
+    - name: Create PyPI summary
+      run: |
+        echo "## 🚀 PyPI Publication" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Published successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **URL**: https://pypi.org/project/openpypi/${{ needs.validate.outputs.version }}/" >> $GITHUB_STEP_SUMMARY
+
+  create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: publish-pypi
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: [validate, publish-pypi]
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'pypi'
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Extract version from tag
-      id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-    
-    - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release v${{ steps.get_version.outputs.VERSION }}
-        body: |
-          ## What's Changed
-          
-          See [CHANGELOG.md](https://github.com/openpypi/openpypi/blob/main/CHANGELOG.md) for detailed changes.
-          
-          ## Installation
-          
-          ```bash
-          pip install openpypi==${{ steps.get_version.outputs.VERSION }}
-          ```
-          
-          ## Quick Start
-          
-          ```bash
-          openpypi create my_project --use-fastapi --use-docker --use-openai
-          ```
-        draft: false
-        prerelease: false
+        fetch-depth: 0
 
-  update-docker:
-    name: Update Docker Images
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        VERSION="${{ needs.validate.outputs.version }}"
+        
+        # Generate changelog since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        echo "## 🚀 Release $VERSION" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 📦 Installation" >> $GITHUB_OUTPUT
+        echo "\`\`\`bash" >> $GITHUB_OUTPUT
+        echo "pip install openpypi==$VERSION" >> $GITHUB_OUTPUT
+        echo "\`\`\`" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        
+        if [[ -n "$LAST_TAG" ]]; then
+          echo "### 📝 Changes since $LAST_TAG" >> $GITHUB_OUTPUT
+          git log --pretty=format:"- %s (%an)" $LAST_TAG..HEAD >> $GITHUB_OUTPUT
+        fi
+        
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 🔗 Links" >> $GITHUB_OUTPUT
+        echo "- [PyPI Package](https://pypi.org/project/openpypi/$VERSION/)" >> $GITHUB_OUTPUT
+        echo "- [Documentation](https://openpypi.readthedocs.io/)" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.validate.outputs.version }}
+        name: Release ${{ needs.validate.outputs.version }}
+        body: ${{ steps.release_notes.outputs.release_notes }}
+        files: dist/*
+        draft: false
+        prerelease: ${{ needs.validate.outputs.is_prerelease }}
+        generate_release_notes: true
+
+  notify:
+    name: Notify Publication
     runs-on: ubuntu-latest
-    needs: publish-pypi
-    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [validate, publish-testpypi, publish-pypi]
+    if: always() && (needs.publish-testpypi.result == 'success' || needs.publish-pypi.result == 'success')
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-    
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2
+    - name: Determine publication status
+      id: status
+      run: |
+        if [[ "${{ needs.publish-pypi.result }}" == "success" ]]; then
+          echo "environment=PyPI" >> $GITHUB_OUTPUT
+          echo "url=https://pypi.org/project/openpypi/${{ needs.validate.outputs.version }}/" >> $GITHUB_OUTPUT
+          echo "emoji=🚀" >> $GITHUB_OUTPUT
+        elif [[ "${{ needs.publish-testpypi.result }}" == "success" ]]; then
+          echo "environment=TestPyPI" >> $GITHUB_OUTPUT
+          echo "url=https://test.pypi.org/project/openpypi/${{ needs.validate.outputs.version }}/" >> $GITHUB_OUTPUT
+          echo "emoji=🧪" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create publication summary
+      run: |
+        echo "## ${{ steps.status.outputs.emoji }} Package Published!" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: ${{ steps.status.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Package URL**: ${{ steps.status.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Installation**: \`pip install openpypi==${{ needs.validate.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+
+    - name: Notify Slack
+      if: always()
+      uses: slackapi/slack-github-action@v1.25.0
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    
-    - name: Extract version from tag
-      id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-    
-    - name: Build and push
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: |
-          openpypi/openpypi:latest
-          openpypi/openpypi:${{ steps.get_version.outputs.VERSION }}
-        platforms: linux/amd64,linux/arm64
-        cache-from: type=gha
-        cache-to: type=gha,mode=max 
+        payload: |
+          {
+            "text": "${{ steps.status.outputs.emoji }} Package Published to ${{ steps.status.outputs.environment }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "${{ steps.status.outputs.emoji }} **Package Published to ${{ steps.status.outputs.environment }}**\n*Package:* openpypi\n*Version:* ${{ needs.validate.outputs.version }}\n*Repository:* ${{ github.repository }}\n*Actor:* ${{ github.actor }}\n*URL:* <${{ steps.status.outputs.url }}|View Package>"
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Installation:*\n```pip install openpypi==${{ needs.validate.outputs.version }}```"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 

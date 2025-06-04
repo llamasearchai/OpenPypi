@@ -1,0 +1,48 @@
+author: OpenPypi
+category: ml
+dependencies:
+- scikit-learn
+- pandas
+- numpy
+- joblib
+description: Machine learning toolkit with scikit-learn
+dev_dependencies:
+- pytest
+- jupyter
+- black
+- flake8
+- mypy
+features:
+- Scikit-learn compatibility
+- Model pipelines
+- Feature engineering
+- Model evaluation
+- Hyperparameter tuning
+- Model persistence
+name: ml_toolkit
+structure:
+  src/{package_name}:
+    __init__.py: ''
+    evaluation:
+      __init__.py: ''
+      metrics.py: ''
+      validation.py: ''
+    models:
+      __init__.py: ''
+      base.py: ''
+      classifiers.py: ''
+      regressors.py: ''
+    preprocessing:
+      __init__.py: ''
+      features.py: ''
+      transformers.py: ''
+    utils:
+      __init__.py: ''
+      helpers.py: ''
+      io.py: ''
+  tests:
+    __init__.py: ''
+    conftest.py: ''
+    test_evaluation.py: ''
+    test_models.py: ''
+    test_preprocessing.py: ''

@@ -1,0 +1,43 @@
+author: OpenPypi
+category: web
+dependencies:
+- fastapi
+- uvicorn
+- pydantic
+- sqlalchemy
+description: Web API with FastAPI
+dev_dependencies:
+- pytest
+- pytest-asyncio
+- httpx
+- black
+- flake8
+features:
+- FastAPI framework
+- Async support
+- Pydantic models
+- OpenAPI documentation
+- Authentication
+- Database integration
+name: web_api
+structure:
+  src/{package_name}:
+    __init__.py: ''
+    api:
+      __init__.py: ''
+      dependencies.py: ''
+      routes.py: ''
+    core:
+      __init__.py: ''
+      config.py: ''
+      security.py: ''
+    main.py: ''
+    models:
+      __init__.py: ''
+      database.py: ''
+      schemas.py: ''
+  tests:
+    __init__.py: ''
+    conftest.py: ''
+    test_api.py: ''
+    test_models.py: ''

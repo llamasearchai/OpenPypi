@@ -1,4 +1,6 @@
-# OpenPypi - Complete Python Project Generator
+# OpenPypi - Python Project Generator (Alpha)
+
+A professional, AI-powered Python project generator with FastAPI, Docker, CI/CD, and advanced testing. Generate modern, production-ready Python projects with a single command. Author: Nikhil Jois <nikjois@llamasearch.ai>
 
 [![CI/CD Pipeline](https://github.com/openpypi/openpypi/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/openpypi/openpypi/actions)
 [![codecov](https://codecov.io/gh/openpypi/openpypi/branch/main/graph/badge.svg)](https://codecov.io/gh/openpypi/openpypi)
@@ -101,7 +103,7 @@ curl -X POST http://localhost:8000/generate/sync \
     "name": "my-project",
     "description": "A test project",
     "author": "John Doe",
-    "email": "john@example.com"
+    "email": "nikjois@llamasearch.ai"
   }'
 
 # Generate project asynchronously
@@ -111,7 +113,7 @@ curl -X POST http://localhost:8000/generate/async \
     "name": "my-async-project",
     "description": "An async test project",
     "author": "Jane Smith",
-    "email": "jane@example.com",
+    "email": "nikjois@llamasearch.ai",
     "options": {
       "use_fastapi": true,
       "use_docker": true,
@@ -137,7 +139,7 @@ config = Config(
     project_name="my-awesome-project",
     package_name="my_package",
     author="Your Name",
-    email="your.email@example.com",
+    email="nikjois@llamasearch.ai",
     use_fastapi=True,
     use_docker=True,
     use_openai=True
@@ -377,7 +379,7 @@ config = Config(
     project_name="my-project",
     package_name="my_package", 
     author="Your Name",
-    email="your.email@example.com",
+    email="nikjois@llamasearch.ai",
     
     # Features
     use_fastapi=True,

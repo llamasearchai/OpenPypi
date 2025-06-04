@@ -5,9 +5,10 @@ Enhanced middleware for OpenPypi API with production-ready features.
 import json
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
+from collections import defaultdict, deque
 
 from fastapi import HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +20,12 @@ from starlette.types import ASGIApp
 from openpypi.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Global metrics storage (use Redis in production)
+request_counts = defaultdict(int)
+response_times = deque(maxlen=1000)
+error_counts = defaultdict(int)
+rate_limit_storage = defaultdict(lambda: {"count": 0, "reset_time": datetime.utcnow()})
 
 
 class SecurityMiddleware(BaseHTTPMiddleware):
@@ -395,3 +402,23 @@ async def rate_limit_middleware(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-RateLimit-Limit"] = "1000"
     return response
+
+
+# Aliases for backward compatibility
+SecurityHeadersMiddleware = SecurityMiddleware
+LoggingMiddleware = RequestLoggingMiddleware
+ErrorHandlingMiddleware = RequestLoggingMiddleware  # ErrorHandlingMiddleware can use RequestLoggingMiddleware
+
+
+def get_middleware_metrics() -> Dict[str, Any]:
+    """Get middleware metrics."""
+    total_requests = sum(request_counts.values())
+    avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+    
+    return {
+        "total_requests": total_requests,
+        "average_response_time": avg_response_time,
+        "request_counts": dict(request_counts),
+        "error_counts": dict(error_counts),
+        "active_connections": len(rate_limit_storage)
+    }

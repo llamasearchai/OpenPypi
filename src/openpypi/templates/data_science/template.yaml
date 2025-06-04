@@ -1,0 +1,46 @@
+author: OpenPypi
+category: data-science
+dependencies:
+- pandas
+- numpy
+- matplotlib
+- seaborn
+- scipy
+description: Data science toolkit with pandas and numpy
+dev_dependencies:
+- pytest
+- jupyter
+- black
+- flake8
+- mypy
+features:
+- Pandas integration
+- NumPy support
+- Data visualization
+- Statistical analysis
+- Jupyter notebooks
+- Data validation
+name: data_science
+structure:
+  notebooks:
+    examples.ipynb: ''
+    tutorial.ipynb: ''
+  src/{package_name}:
+    __init__.py: ''
+    analysis:
+      __init__.py: ''
+      statistics.py: ''
+      visualization.py: ''
+    data:
+      __init__.py: ''
+      loader.py: ''
+      processor.py: ''
+      validator.py: ''
+    utils:
+      __init__.py: ''
+      helpers.py: ''
+  tests:
+    __init__.py: ''
+    conftest.py: ''
+    test_analysis.py: ''
+    test_data.py: ''

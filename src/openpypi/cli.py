@@ -25,7 +25,7 @@ except ImportError:
 
 from .core import Config, ProjectGenerator
 from .core.context import PackageContext
-from .core.exceptions import OpenPypiError
+from .core.exceptions import OpenPypiException
 from .providers import get_provider, list_providers
 from .utils.logger import get_logger, setup_logging
 from .stages.p6_deployer import DeployerStage
@@ -288,7 +288,7 @@ def handle_create_command(args) -> int:
 
         return 0
 
-    except OpenPypiError as e:
+    except OpenPypiException as e:
         logger.error(f"Creation failed: {e}")
         print(f"Error: {e}", file=sys.stderr)
         return 1
@@ -382,7 +382,7 @@ def handle_validate_command(args) -> int:
 
         return 0
 
-    except OpenPypiError as e:
+    except OpenPypiException as e:
         print(f"Configuration invalid: {e}", file=sys.stderr)
         return 1
     except Exception as e:
@@ -478,7 +478,7 @@ def handle_config_command(args) -> int:
 
         return 0
 
-    except OpenPypiError as e:
+    except OpenPypiException as e:
         logger.error(f"Config operation failed: {e}")
         print(f"Error: {e}", file=sys.stderr)
         return 1

@@ -1,0 +1,28 @@
+author: OpenPypi
+category: library
+dependencies: []
+description: General-purpose Python library
+dev_dependencies:
+- pytest
+- pytest-cov
+- black
+- flake8
+- mypy
+features:
+- Modular architecture
+- Type hints
+- Comprehensive documentation
+- Unit tests
+- API design
+name: library
+structure:
+  src/{package_name}:
+    __init__.py: ''
+    core.py: ''
+    exceptions.py: ''
+    utils.py: ''
+  tests:
+    __init__.py: ''
+    conftest.py: ''
+    test_core.py: ''
+    test_utils.py: ''

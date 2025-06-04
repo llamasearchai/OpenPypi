@@ -22,7 +22,7 @@ class TestAuthComprehensive:
     def test_token_generation_valid_credentials(self):
         """Test token generation with valid credentials."""
         response = client.post(
-            "/auth/token", data={"username": "testuser", "password": "testpassword"}
+            "/api/v1/auth/token", data={"username": "testuser", "password": "testpassword"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -32,7 +32,7 @@ class TestAuthComprehensive:
 
     def test_token_generation_invalid_credentials(self):
         """Test token generation with invalid credentials."""
-        response = client.post("/auth/token", data={"username": "invalid", "password": "invalid"})
+        response = client.post("/api/v1/auth/token", data={"username": "invalid", "password": "invalid"})
         assert response.status_code == 401
 
     def test_user_registration_valid_data(self):
@@ -43,7 +43,7 @@ class TestAuthComprehensive:
             "full_name": "New User",
             "password": "securepass123",
         }
-        response = client.post("/auth/register", json=user_data)
+        response = client.post("/api/v1/auth/register", json=user_data)
         assert response.status_code == 201
 
     def test_user_registration_duplicate_username(self):
@@ -54,7 +54,7 @@ class TestAuthComprehensive:
             "full_name": "Another User",
             "password": "securepass123",
         }
-        response = client.post("/auth/register", json=user_data)
+        response = client.post("/api/v1/auth/register", json=user_data)
         assert response.status_code == 400
 
     def test_api_key_validation_valid_key(self):

@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/api/routes/admin.py
+# hypothesis_version: 6.133.2
+
+[100, 200, 365, 403, '/admin', '/audit-logs', '/health/detailed', '/maintenance/cleanup', '/projects', '/stats', '/users', '/users/{user_id}', 'Project not found', 'SELECT 1', 'User not found', 'admin', 'database', 'days_back', 'description', 'error_rate_1h', 'failed', 'healthy', 'logs', 'message', 'old_logs_removed', 'page', 'per_page', 'projects', 'recent_builds', 'recent_errors', 'results', 'success', 'timestamp', 'total']

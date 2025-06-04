@@ -139,3 +139,15 @@ async def get_detailed_health(
 async def ping() -> APIResponse:
     """A simple ping endpoint to check if the API is responsive."""
     return APIResponse(success=True, message="pong")
+
+
+@router.get("/ready", response_model=APIResponse, summary="Kubernetes Readiness Probe")
+async def readiness_probe() -> APIResponse:
+    """Kubernetes readiness probe endpoint."""
+    return APIResponse(success=True, message="ready")
+
+
+@router.get("/live", response_model=APIResponse, summary="Kubernetes Liveness Probe")
+async def liveness_probe() -> APIResponse:
+    """Kubernetes liveness probe endpoint."""
+    return APIResponse(success=True, message="alive")

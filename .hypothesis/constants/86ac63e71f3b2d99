@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/database/session.py
+# hypothesis_version: 6.133.2
+
+[3600, 'APP_ENV', 'SELECT 1', 'async_checked_in', 'async_checked_out', 'async_overflow', 'async_pool_size', 'check_same_thread', 'checkin', 'checkout', 'connect', 'connect_args', 'database_url', 'development', 'echo', 'error', 'future', 'max_overflow', 'pool_pre_ping', 'pool_recycle', 'pool_size', 'poolclass', 'postgresql', 'postgresql://', 'production', 'sqlite', 'sqlite+aiosqlite://', 'sqlite://', 'timeout']

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from openpypi.core.config import ConfigManager
 from openpypi.core.context import PackageContext
-from openpypi.core.exceptions import OpenPypiError, ValidationError
+from openpypi.core.exceptions import OpenPypiException, ValidationError
 from openpypi.core.generator import ProjectGenerator
 from openpypi.providers import get_provider
 from openpypi.stages import Pipeline, StageStatus

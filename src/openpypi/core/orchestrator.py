@@ -446,3 +446,7 @@ class PipelineError(Exception):
     """Exception raised when pipeline execution fails."""
 
     pass
+
+
+# Alias for backward compatibility
+Orchestrator = PipelineOrchestrator

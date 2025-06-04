@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..core.config import Config
-from ..core.exceptions import OpenPypiError
+from ..core.exceptions import OpenPypiException
 from ..stages import Stage, StageResult, StageStatus
 
 logger = logging.getLogger(__name__)

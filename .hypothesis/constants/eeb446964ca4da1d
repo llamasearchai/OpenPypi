@@ -1,0 +1,4 @@
+# file: /Users/nemesis/OpenPypi/src/openpypi/stages/p0_orchestrator.py
+# hypothesis_version: 6.133.2
+
+['.', 'architect', 'conceptualizer', 'continue_on_failure', 'data', 'deployer', 'documentarian', 'error', 'error_recovery', 'execution_plan', 'execution_planning', 'execution_time', 'max_retries', 'message', 'mock', 'orchestrator', 'output_dir', 'overall_success', 'packager', 'parallel_execution', 'project_config', 'refiner', 'retry_logic', 'stage', 'stage_coordination', 'stage_results', 'status', 'success_count', 'total_stages', 'valid', 'validator']
