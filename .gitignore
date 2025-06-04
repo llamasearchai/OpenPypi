@@ -60,4 +60,29 @@ pip-audit-report.json
 safety-report.json
 
 # Benchmark results
-benchmark-results.json 
+benchmark-results.json
+
+# Large binary files
+*.deb
+*.rpm
+*.dmg
+*.msi
+*.exe
+*.tar.gz.large
+*.zip.large
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Environment variables
+.env
+.env.local
+.env.*.local 
