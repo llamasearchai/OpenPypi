@@ -28,7 +28,7 @@ RUN python -m build
 # Production stage
 FROM python:3.11-slim as production
 
-LABEL maintainer="OpenPypi Team <team@openpypi.com>"
+LABEL maintainer="Nik Jois <nikjois@llamasearch.ai>"
 LABEL version="1.0.0"
 LABEL description="OpenPypi - Complete Python Project Generator"
 

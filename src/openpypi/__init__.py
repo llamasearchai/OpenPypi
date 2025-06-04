@@ -254,8 +254,8 @@ class OpenPypi:
 
 
 # Export version and metadata
-__author__ = "OpenPypi Team"
-__email__ = "team@openpypi.com"
+__author__ = "Nik Jois"
+__email__ = "nikjois@llamasearch.ai"
 __license__ = "MIT"
 __description__ = (
     "Complete Python Project Generator with FastAPI, Docker, CI/CD, and OpenAI integration"

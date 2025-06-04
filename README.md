@@ -9,19 +9,19 @@
 
 **OpenPypi** is a comprehensive, production-ready Python project generator with AI integration, FastAPI web framework, Docker containerization, and enterprise-grade CI/CD pipelines. Generate complete, modern Python projects with just a few commands.
 
-## 🚀 Features
+## FEATURES
 
 ### Core Functionality
-- **🤖 AI-Powered Generation**: OpenAI integration for intelligent project scaffolding
-- **🌐 FastAPI Integration**: Modern async web framework with automatic API documentation
-- **🐳 Docker Support**: Multi-stage production-ready Dockerfiles and docker-compose
-- **⚡ Performance Optimized**: Advanced middleware with rate limiting, caching, and monitoring
-- **🔒 Enterprise Security**: Comprehensive security headers, authentication, and audit logging
-- **📊 Real-time Monitoring**: System metrics, health checks, and performance tracking
-- **🗄️ Database Integration**: SQLAlchemy models with Alembic migrations
-- **🧪 Comprehensive Testing**: pytest, coverage, performance, and security testing
-- **📚 Auto Documentation**: Sphinx documentation with API reference
-- **🔄 CI/CD Pipelines**: GitHub Actions with multi-stage deployments
+- **AI-Powered Generation**: OpenAI integration for intelligent project scaffolding
+- **Web Framework Integration**: Modern async web framework with automatic API documentation
+- **Container Support**: Multi-stage production-ready Dockerfiles and docker-compose
+- **Performance Optimized**: Advanced middleware with rate limiting, caching, and monitoring
+- **Enterprise Security**: Comprehensive security headers, authentication, and audit logging
+- **Real-time Monitoring**: System metrics, health checks, and performance tracking
+- **Database Integration**: SQLAlchemy models with Alembic migrations
+- **Comprehensive Testing**: pytest, coverage, performance, and security testing
+- **Auto Documentation**: Sphinx documentation with API reference
+- **CI/CD Pipelines**: GitHub Actions with multi-stage deployments
 
 ### Advanced Features
 - **Load Testing**: Locust-based performance testing framework
@@ -33,7 +33,7 @@
 - **Security Scanning**: Bandit, Safety, and Semgrep integration
 - **Code Quality**: Black, isort, flake8, pylint, and mypy
 
-## 📦 Installation
+## INSTALLATION
 
 ### Quick Start
 
@@ -58,7 +58,7 @@ docker pull openpypi/openpypi:latest
 docker run -p 8000:8000 openpypi/openpypi:latest
 ```
 
-## 🛠️ Usage
+## USAGE
 
 ### Command Line Interface
 
@@ -151,7 +151,7 @@ print(f"Project created at: {result['project_dir']}")
 print(f"Files created: {len(result['files_created'])}")
 ```
 
-## 🏗️ Architecture
+## ARCHITECTURE
 
 ### System Components
 
@@ -198,7 +198,7 @@ User Request → Middleware → Authentication → Rate Limiting →
 Business Logic → Database → Cache → Response → Logging → Metrics
 ```
 
-## 🧪 Testing
+## TESTING
 
 ### Run All Tests
 
@@ -244,7 +244,7 @@ safety check
 semgrep --config=auto src/
 ```
 
-## 🐳 Docker Deployment
+## DOCKER DEPLOYMENT
 
 ### Multi-stage Dockerfile
 
@@ -277,7 +277,7 @@ docker-compose -f docker-compose.enhanced.yml up
 docker-compose -f docker-compose.enhanced.yml -f docker-compose.prod.yml up
 ```
 
-## ☸️ Kubernetes Deployment
+## KUBERNETES DEPLOYMENT
 
 ### Deploy to Kubernetes
 
@@ -306,7 +306,7 @@ curl http://localhost:8000/ready
 curl http://localhost:8000/health/detailed
 ```
 
-## 📊 Monitoring & Observability
+## MONITORING & OBSERVABILITY
 
 ### System Metrics
 
@@ -341,7 +341,7 @@ The system includes comprehensive performance monitoring:
 - **Cache metrics**: Hit rates, eviction policies
 - **Custom business metrics**: Project generation success rates
 
-## 🔧 Configuration
+## CONFIGURATION
 
 ### Environment Variables
 
@@ -399,7 +399,7 @@ config = Config(
 )
 ```
 
-## 🔒 Security Features
+## SECURITY FEATURES
 
 ### Authentication & Authorization
 
@@ -422,7 +422,7 @@ config = Config(
 - **Secret Management**: Environment-based configuration
 - **Encryption**: At-rest and in-transit data encryption
 
-## 📈 Performance Optimization
+## PERFORMANCE OPTIMIZATION
 
 ### Caching Strategy
 
@@ -452,7 +452,7 @@ def generate_project(config):
 - **Async Processing**: Non-blocking I/O operations
 - **Rate Limiting**: Intelligent throttling and queuing
 
-## 🚀 Deployment Options
+## DEPLOYMENT OPTIONS
 
 ### Cloud Platforms
 
@@ -503,7 +503,7 @@ terraform apply
 ansible-playbook -i inventory playbooks/deploy.yml
 ```
 
-## 🔄 CI/CD Pipeline
+## CI/CD PIPELINE
 
 ### GitHub Actions Workflow
 
@@ -536,7 +536,7 @@ jobs:
   deploy:       # Production deployment
 ```
 
-## 📚 Documentation
+## DOCUMENTATION
 
 ### API Documentation
 
@@ -566,7 +566,7 @@ python -m http.server 8080 --directory _build/html
 - [Performance Tuning](docs/performance.md)
 - [Security Best Practices](docs/security.md)
 
-## 🤝 Contributing
+## CONTRIBUTING
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
@@ -604,11 +604,11 @@ We use the following tools for code quality:
 - **mypy**: Type checking
 - **pre-commit**: Git hooks
 
-## 📄 License
+## LICENSE
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## ACKNOWLEDGMENTS
 
 - **FastAPI**: Modern web framework for building APIs
 - **SQLAlchemy**: SQL toolkit and Object-Relational Mapping
@@ -617,14 +617,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **GitHub Actions**: CI/CD automation
 - **All Contributors**: Thanks to everyone who has contributed!
 
-## 📞 Support
+## SUPPORT
 
 - **Documentation**: [https://openpypi.readthedocs.io](https://openpypi.readthedocs.io)
 - **Issues**: [GitHub Issues](https://github.com/openpypi/openpypi/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/openpypi/openpypi/discussions)
-- **Email**: [team@openpypi.dev](mailto:team@openpypi.dev)
+- **Email**: [nikjois@llamasearch.ai](mailto:nikjois@llamasearch.ai)
 
-## 🗺️ Roadmap
+## ROADMAP
 
 ### Upcoming Features
 
@@ -648,4 +648,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-⭐ **Star this repository if you find it useful!** ⭐ 
+**Please star this repository if you find it useful!** 

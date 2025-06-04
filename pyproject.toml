@@ -10,10 +10,10 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "OpenPypi Team", email = "team@openpypi.dev"},
+    {name = "Nik Jois", email = "nikjois@llamasearch.ai"},
 ]
 maintainers = [
-    {name = "OpenPypi Team", email = "team@openpypi.dev"},
+    {name = "Nik Jois", email = "nikjois@llamasearch.ai"},
 ]
 keywords = [
     "python",
