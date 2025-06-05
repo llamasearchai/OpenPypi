@@ -162,7 +162,7 @@ class Config(BaseSettings):
     # Project metadata
     project_name: str = Field("openpypi", description="Name of the project")
     package_name: Optional[str] = Field(None, description="Python package name")
-    author: str = Field("Nikhil Jois", description="Author name")
+    author: str = Field("Nik Jois", description="Author name")
     email: str = Field("nikjois@llamasearch.ai", description="Author email")
     description: Optional[str] = Field(None, description="Project description")
     version: str = Field("0.1.0", description="Project version")

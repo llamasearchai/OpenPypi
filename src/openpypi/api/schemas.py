@@ -83,7 +83,7 @@ class ProjectIdeaRequest(BaseModel):
         None,
         description="Output directory for the generated project (server-side setting primarily).",
     )
-    author: Optional[str] = Field("OpenPypi User", description="Author's name.")
+    author: Optional[str] = Field("Nik Jois", description="Author's name.")
     email: Optional[EmailStr] = Field("nikjois@llamasearch.ai", description="Author's email.")
     version: Optional[str] = Field(
         "0.1.0", pattern=r"^\d+\.\d+\.\d+([a-zA-Z0-9.-]*)$", description="Initial project version."

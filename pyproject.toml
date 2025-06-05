@@ -6,7 +6,9 @@ build-backend = "poetry.core.masonry.api"
 name = "openpypi"
 version = "0.3.0"
 description = "A comprehensive Python package creation, testing, and publishing platform with AI assistance and automated workflows"
-authors = ["Nikhil Jois <nikjois@llamasearch.ai>"]
+authors = [
+    {name = "Nik Jois", email = "nikjois@llamasearch.ai"},
+]
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/openpypi/openpypi"

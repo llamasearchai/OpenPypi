@@ -102,7 +102,7 @@ class TemplateManager:
                 "name": "cli_tool",
                 "description": "Command-line interface application with Click",
                 "category": "cli",
-                "author": "OpenPypi",
+                "author": "Nik Jois",
                 "features": [
                     "Click CLI framework",
                     "Argument parsing",
@@ -134,7 +134,7 @@ class TemplateManager:
                 "name": "library",
                 "description": "General-purpose Python library",
                 "category": "library",
-                "author": "OpenPypi",
+                "author": "Nik Jois",
                 "features": [
                     "Modular architecture",
                     "Type hints",
@@ -163,7 +163,7 @@ class TemplateManager:
                 "name": "web_api",
                 "description": "Web API with FastAPI",
                 "category": "web",
-                "author": "OpenPypi",
+                "author": "Nik Jois",
                 "features": [
                     "FastAPI framework",
                     "Async support",
@@ -194,7 +194,7 @@ class TemplateManager:
                 "name": "data_science",
                 "description": "Data science toolkit with pandas and numpy",
                 "category": "data-science",
-                "author": "OpenPypi",
+                "author": "Nik Jois",
                 "features": [
                     "Pandas integration",
                     "NumPy support",
@@ -234,7 +234,7 @@ class TemplateManager:
                 "name": "ml_toolkit",
                 "description": "Machine learning toolkit with scikit-learn",
                 "category": "ml",
-                "author": "OpenPypi",
+                "author": "Nik Jois",
                 "features": [
                     "Scikit-learn compatibility",
                     "Model pipelines",
@@ -361,7 +361,7 @@ class TemplateManager:
         description: str,
         category: str,
         features: List[str],
-        author: str = "User",
+        author: str = "Nik Jois",
         dependencies: Optional[List[str]] = None,
         dev_dependencies: Optional[List[str]] = None,
         python_version: str = ">=3.8",
@@ -463,7 +463,7 @@ class TemplateManager:
 
         # Don't allow deletion of built-in templates
         template = await self.get_template(name)
-        if template and template.author == "OpenPypi":
+        if template and template.author == "Nik Jois":
             raise TemplateError(f"Cannot delete built-in template: {name}")
 
         # Delete template directory
@@ -601,7 +601,7 @@ readme = "README.md"
 requires-python = "{template.python_version}"
 license = {{text = "{substitutions['license']}"}}
 authors = [
-    {{name = "{substitutions['author']}", email = "{substitutions['email']}"}},
+    {{name = "Nik Jois", email = "nikjois@llamasearch.ai"}},
 ]
 keywords = {template.features[:5]}
 classifiers = [
@@ -626,9 +626,9 @@ packages = ["{substitutions['package_name']}"]
 package-dir = {{"" = "src"}}
 
 [project.urls]
-Homepage = "https://github.com/{substitutions['author']}/{substitutions['package_name']}"
-Repository = "https://github.com/{substitutions['author']}/{substitutions['package_name']}"
-Issues = "https://github.com/{substitutions['author']}/{substitutions['package_name']}/issues"
+Homepage = "https://github.com/NikJois/{substitutions['package_name']}"
+Repository = "https://github.com/NikJois/{substitutions['package_name']}"
+Issues = "https://github.com/NikJois/{substitutions['package_name']}/issues"
 """
 
         # Add entry points for CLI templates
@@ -670,7 +670,7 @@ import {substitutions['package_name']}
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/{substitutions['author']}/{substitutions['package_name']}.git
+git clone https://github.com/NikJois/{substitutions['package_name']}.git
 cd {substitutions['package_name']}
 ```
 

@@ -26,7 +26,7 @@ class ProjectRequest(BaseModel):
     """Project generation request model."""
     name: str = Field(..., description="Project name")
     description: Optional[str] = Field(None, description="Project description")
-    author: str = Field("Nikhil Jois", description="Author name")
+    author: str = Field("Nik Jois", description="Author name")
     email: str = Field("nikjois@llamasearch.ai", description="Author email")
     options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Project options")
     
@@ -351,7 +351,7 @@ async def get_config_info():
     """Get configuration information."""
     return {
         "version": "0.3.0",
-        "author": "Nikhil Jois",
+        "author": "Nik Jois",
         "email": "nikjois@llamasearch.ai",
         "features": {
             "fastapi_support": True,
@@ -381,7 +381,7 @@ async def validate_config(request: ConfigValidationRequest):
         if not config_data.get("project_name"):
             config_data["project_name"] = "test-project"
         if not config_data.get("author"):
-            config_data["author"] = "Nikhil Jois"
+            config_data["author"] = "Nik Jois"
         if not config_data.get("email"):
             config_data["email"] = "nikjois@llamasearch.ai"
         

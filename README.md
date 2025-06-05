@@ -1,6 +1,6 @@
 # OpenPypi - Python Project Generator (Alpha)
 
-A professional, AI-powered Python project generator with FastAPI, Docker, CI/CD, and advanced testing. Generate modern, production-ready Python projects with a single command. Author: Nikhil Jois <nikjois@llamasearch.ai>
+A professional, AI-powered Python project generator with FastAPI, Docker, CI/CD, and advanced testing. Generate modern, production-ready Python projects with a single command. Author: Nik Jois <nikjois@llamasearch.ai>
 
 [![CI/CD Pipeline](https://github.com/openpypi/openpypi/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/openpypi/openpypi/actions)
 [![codecov](https://codecov.io/gh/openpypi/openpypi/branch/main/graph/badge.svg)](https://codecov.io/gh/openpypi/openpypi)
