@@ -362,7 +362,14 @@ class GitHubProvider(BaseProvider):
             logger.error(f"Failed to push to repository: {e}")
             return False
 
-    # Add missing abstract methods
+    def generate_ai_code(self, prompt: str) -> str:
+        """Generate AI code (not supported by GitHub provider)."""
+        raise NotImplementedError("AI code generation is not available through GitHub provider. Use OpenAI provider instead.")
+
+    def generate_code_completion(self, code: str) -> str:
+        """Generate code completion (not supported by GitHub provider)."""
+        raise NotImplementedError("Code completion is not available through GitHub provider. Use OpenAI provider instead.")
+
     async def generate_response(self, *args, **kwargs) -> Dict[str, Any]:
         raise NotImplementedError("GitHub provider doesn't support AI generation")
 

@@ -635,10 +635,10 @@ volumes:"""
 
     # Add missing abstract methods
     async def generate_response(self, *args, **kwargs) -> Dict[str, Any]:
-        raise NotImplementedError("Docker provider doesn't support AI generation")
+        raise NotImplementedError("AI generation is not available through Docker provider. Use OpenAI provider instead.")
 
-    async def generate_code(self, *args, **kwargs) -> Dict[str, Any]:
-        raise NotImplementedError("Docker provider doesn't support code generation")
+    async def generate_code(self, *args, **kwargs) -> str:
+        raise NotImplementedError("Code generation is not available through Docker provider. Use OpenAI provider instead.")
 
     async def estimate_cost(self, *args, **kwargs) -> Dict[str, float]:
         return {"estimated_cost": 0.0}

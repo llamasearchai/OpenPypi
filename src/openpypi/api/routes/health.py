@@ -11,6 +11,7 @@ from openai import OpenAI
 from openpypi.api.dependencies import get_db, get_openai_client
 from openpypi.api.schemas import APIResponse, HealthStatus
 from openpypi.utils.logger import get_logger
+from openpypi._version import __version__
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -70,6 +71,7 @@ async def get_health(
         timestamp=datetime.utcnow(),
         dependencies=dependencies_status,
         uptime_seconds=uptime_seconds,
+        version=__version__,
     )
 
 
@@ -132,6 +134,7 @@ async def get_detailed_health(
         timestamp=datetime.utcnow(),
         dependencies=dependencies_status,
         uptime_seconds=uptime_seconds,
+        version=__version__,
     )
 
 

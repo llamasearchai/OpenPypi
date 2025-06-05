@@ -226,6 +226,12 @@ def create_app() -> FastAPI:
             "health": "/health"
         }
     
+    # Direct liveness probe endpoint
+    @app.get("/live", response_model=dict, summary="Liveness Probe")
+    async def liveness_probe():
+        """Direct liveness probe endpoint for Kubernetes."""
+        return {"success": True, "message": "alive"}
+    
     # Global exception handlers
     @app.exception_handler(OpenPypiException)
     async def openpypi_exception_handler(request: Request, exc: OpenPypiException):

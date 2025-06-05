@@ -208,6 +208,11 @@ class Config(BaseSettings):
     app_env: str = Field("development", description="Application environment")
     log_level: str = Field("INFO", description="Logging level")
     
+    # Security/testing overrides (for API/tests only)
+    api_keys: List[str] = Field(default_factory=list, description="API keys for test/dev override (not for production use)")
+    fake_users_db_override: Optional[dict] = Field(default=None, description="Override user DB for testing (not for production use)")
+    allow_overwrite: bool = Field(default=False, description="Allow overwriting existing directories (for testing)")
+    
     class Config:
         env_prefix = "OPENPYPI_"
         case_sensitive = False

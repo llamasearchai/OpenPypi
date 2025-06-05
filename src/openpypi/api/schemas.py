@@ -42,6 +42,7 @@ class HealthStatus(BaseModel):
     timestamp: datetime
     dependencies: Optional[Dict[str, str]] = None
     uptime_seconds: Optional[float] = None
+    version: Optional[str] = None
 
 
 # Project Generation Models

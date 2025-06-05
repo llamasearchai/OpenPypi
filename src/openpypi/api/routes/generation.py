@@ -202,6 +202,7 @@ async def generate_project_async(
             use_openai=project_request.use_openai or True,
             create_tests=project_request.create_tests or True,
             test_framework=project_request.test_framework or "pytest",
+            allow_overwrite=True,  # Allow overwriting for testing
         )
 
         # Override with options if provided
@@ -277,6 +278,7 @@ async def generate_project_sync(
             use_openai=project_request.use_openai or True,
             create_tests=project_request.create_tests or True,
             test_framework=project_request.test_framework or "pytest",
+            allow_overwrite=True,  # Allow overwriting for testing
         )
 
         # Override with options if provided

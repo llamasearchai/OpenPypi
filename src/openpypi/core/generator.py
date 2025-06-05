@@ -112,7 +112,12 @@ class ProjectGenerator:
         
         if project_dir.exists():
             if any(project_dir.iterdir()):
-                raise GenerationError(f"Directory '{project_dir}' already exists and is not empty")
+                if not getattr(self.config, 'allow_overwrite', False):
+                    raise GenerationError(f"Directory '{project_dir}' already exists and is not empty")
+                else:
+                    # Clear existing directory for overwrite
+                    import shutil
+                    shutil.rmtree(project_dir)
         
         project_dir.mkdir(parents=True, exist_ok=True)
         self.results["directories_created"].append(str(project_dir))
