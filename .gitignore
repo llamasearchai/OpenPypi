@@ -60,7 +60,7 @@ pip-audit-report.json
 safety-report.json
 
 # Benchmark results
-benchmark-results.json
+benchmark-results.json 
 
 # Large binary files
 *.deb

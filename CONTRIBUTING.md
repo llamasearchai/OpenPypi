@@ -340,7 +340,7 @@ class TestConfig:
 Use pytest fixtures for common test data:
 
 ```python
-    @pytest.fixture
+@pytest.fixture
 def sample_config():
     """Provide sample configuration for tests."""
     return Config(
