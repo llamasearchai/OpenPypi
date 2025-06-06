@@ -349,7 +349,9 @@ class OpenAIProvider(AIBaseProvider):
                     },
                     {
                         "role": "user",
-                        "content": f"Review this code for quality, style and potential issues:\n\n{code}",
+                        "content": (
+                            f"Review this code for quality, style and potential issues:\n\n{code}"
+                        ),
                     },
                 ],
                 temperature=0.5,

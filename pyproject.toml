@@ -9,6 +9,9 @@ description = "A comprehensive Python package creation, testing, and publishing 
 authors = [
     "Nik Jois <nikjois@llamasearch.ai>",
 ]
+maintainers = [
+    "Nik Jois <nikjois@llamasearch.ai>",
+]
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/openpypi/openpypi"
@@ -16,7 +19,8 @@ repository = "https://github.com/openpypi/openpypi"
 documentation = "https://openpypi.readthedocs.io"
 keywords = [
     "python", "package", "pypi", "automation", "ai", "fastapi", 
-    "docker", "testing", "ci-cd", "packaging", "development"
+    "docker", "testing", "ci-cd", "packaging", "development",
+    "code-generation", "project-template", "scaffolding"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -24,21 +28,43 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Code Generators",
     "Topic :: System :: Software Distribution",
     "Framework :: FastAPI",
+    "Framework :: Pydantic",
+    "Environment :: Console",
+    "Environment :: Web Environment",
 ]
 packages = [{include = "openpypi", from = "src"}]
+include = [
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "src/openpypi/templates/**/*",
+]
+exclude = [
+    "tests/",
+    "docs/",
+    "scripts/",
+    ".github/",
+    "*.pyc",
+    "__pycache__/",
+    ".pytest_cache/",
+    ".coverage",
+    "htmlcov/",
+]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 
-# Core web framework
+# Core web framework and ASGI server
 fastapi = "^0.104.1"
 uvicorn = {extras = ["standard"], version = "^0.24.0"}
 gunicorn = "^21.2.0"
@@ -59,10 +85,12 @@ pydantic-settings = "^2.1.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-multipart = "^0.0.6"
+cryptography = "^41.0.7"
 
 # AI and OpenAI integration
 openai = "^1.3.0"
 tiktoken = "^0.5.1"
+anthropic = {version = "^0.7.0", optional = true}
 
 # Package management and building
 build = "^1.0.3"
@@ -71,6 +99,7 @@ twine = "^4.0.2"
 packaging = "^23.2"
 toml = "^0.10.2"
 tomli = "^2.0.1"
+tomli-w = "^1.0.0"
 
 # Docker integration
 docker = "^6.1.3"
@@ -78,27 +107,38 @@ docker = "^6.1.3"
 # GitHub integration
 pygithub = "^2.1.1"
 
+# Template engine
+jinja2 = "^3.1.2"
+
+# CLI and rich terminal output
+click = "^8.1.7"
+rich = "^13.7.0"
+typer = "^0.9.0"
+
+# Configuration and environment
+python-dotenv = "^1.0.0"
+pyyaml = "^6.0.1"
+
+# File operations and utilities
+aiofiles = "^23.2.1"
+pathlib2 = {version = "^2.3.7", markers = "python_version < '3.4'"}
+
+# Async utilities
+asyncio-mqtt = {version = "^0.16.0", optional = true}
+croniter = "^2.0.1"
+
+# Monitoring and logging
+structlog = "^23.2.0"
+sentry-sdk = {extras = ["fastapi"], version = "^1.38.0"}
+prometheus-fastapi-instrumentator = "^6.1.0"
+
 # Cloud providers (optional)
 boto3 = {version = "^1.34.0", optional = true}
 google-cloud-storage = {version = "^2.10.0", optional = true}
 azure-storage-blob = {version = "^12.19.0", optional = true}
 
-# Monitoring and logging
-structlog = "^23.2.0"
-sentry-sdk = {extras = ["fastapi"], version = "^1.38.0"}
-
-# Utilities
-click = "^8.1.7"
-rich = "^13.7.0"
-typer = "^0.9.0"
-jinja2 = "^3.1.2"
-pyyaml = "^6.0.1"
-python-dotenv = "^1.0.0"
-aiofiles = "^23.2.1"
-croniter = "^2.0.1"
-
 [tool.poetry.group.dev.dependencies]
-# Testing
+# Testing framework and utilities
 pytest = "^7.4.3"
 pytest-asyncio = "^0.21.1"
 pytest-cov = "^4.1.0"
@@ -106,31 +146,48 @@ pytest-xdist = "^3.5.0"
 pytest-mock = "^3.12.0"
 pytest-benchmark = "^4.0.0"
 pytest-timeout = "^2.2.0"
-httpx-oauth = "^0.7.1"
+pytest-sugar = "^0.9.7"
+pytest-clarity = "^1.0.1"
+pytest-randomly = "^3.15.0"
+coverage = {extras = ["toml"], version = "^7.3.2"}
 
-# Code quality
+# Code quality and formatting
 black = "^23.11.0"
 isort = "^5.12.0"
 flake8 = "^6.1.0"
+flake8-docstrings = "^1.7.0"
+flake8-import-order = "^0.18.2"
+flake8-annotations = "^3.0.1"
 mypy = "^1.7.1"
 pylint = "^3.0.3"
+autoflake = "^2.2.1"
+autopep8 = "^2.0.4"
+
+# Pre-commit hooks
 pre-commit = "^3.6.0"
 
-# Security
+# Security testing
 bandit = "^1.7.5"
 safety = "^2.3.5"
 pip-audit = "^2.6.1"
 semgrep = "^1.48.0"
 
-# Documentation
-sphinx = "^7.2.6"
-sphinx-rtd-theme = "^1.3.0"
-myst-parser = "^2.0.0"
+# Performance and profiling
+py-spy = "^0.3.14"
+memory-profiler = "^0.61.0"
+line-profiler = "^4.1.1"
 
-# Development tools
+# Development utilities
 ipython = "^8.17.2"
-jupyterlab = "^4.0.8"
-notebook = "^7.0.6"
+ipdb = "^0.13.13"
+rich-traceback = "^0.1.4"
+
+# API testing
+httpx = "^0.25.2"
+respx = "^0.20.2"
+
+# Load testing
+locust = "^2.17.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.3"
@@ -143,6 +200,8 @@ pytest-timeout = "^2.2.0"
 coverage = "^7.3.2"
 factory-boy = "^3.3.0"
 faker = "^20.1.0"
+freezegun = "^1.2.2"
+responses = "^0.24.1"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.2.6"
@@ -150,40 +209,60 @@ sphinx-rtd-theme = "^1.3.0"
 myst-parser = "^2.0.0"
 sphinx-autodoc-typehints = "^1.25.2"
 sphinx-copybutton = "^0.5.2"
+sphinx-click = "^5.1.0"
+sphinxcontrib-mermaid = "^0.9.2"
+furo = "^2023.9.10"
+
+[tool.poetry.group.jupyter.dependencies]
+jupyterlab = "^4.0.8"
+notebook = "^7.0.6"
+ipywidgets = "^8.1.1"
+matplotlib = "^3.8.2"
+seaborn = "^0.13.0"
+plotly = "^5.17.0"
 
 [tool.poetry.extras]
 aws = ["boto3"]
 gcp = ["google-cloud-storage"]
 azure = ["azure-storage-blob"]
-all = ["boto3", "google-cloud-storage", "azure-storage-blob"]
+ai-anthropic = ["anthropic"]
+async = ["asyncio-mqtt"]
+jupyter = ["jupyterlab", "notebook", "ipywidgets", "matplotlib", "seaborn", "plotly"]
+all = ["boto3", "google-cloud-storage", "azure-storage-blob", "anthropic", "asyncio-mqtt"]
 
 [tool.poetry.scripts]
 openpypi = "openpypi.cli:main"
 openpypi-server = "openpypi.api.app:main"
+openpypi-generate = "openpypi.core.generator:main"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/openpypi/openpypi/issues"
 "Changelog" = "https://github.com/openpypi/openpypi/blob/main/CHANGELOG.md"
 "Documentation" = "https://openpypi.readthedocs.io"
 "Source Code" = "https://github.com/openpypi/openpypi"
+"Discussions" = "https://github.com/openpypi/openpypi/discussions"
+"Sponsor" = "https://github.com/sponsors/nikjois"
 
 # Black configuration
 [tool.black]
 line-length = 100
-target-version = ['py39', 'py310', 'py311', 'py312']
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
     \.eggs
   | \.git
   | \.venv
+  | venv
   | _build
   | buck-out
   | build
   | dist
   | migrations
+  | node_modules
 )/
 '''
+preview = true
 
 # isort configuration
 [tool.isort]
@@ -195,49 +274,62 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 src_paths = ["src", "tests"]
-skip_glob = ["**/migrations/*"]
+skip_glob = ["**/migrations/*", "**/node_modules/*"]
+known_first_party = ["openpypi"]
+known_third_party = ["fastapi", "pydantic", "sqlalchemy", "pytest"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 
 # MyPy configuration
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
-strict_optional = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
+strict_equality = true
+strict_concatenate = true
 check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
 disallow_untyped_decorators = true
 no_implicit_optional = true
+strict_optional = true
 show_error_codes = true
 show_column_numbers = true
+show_error_context = true
+ignore_missing_imports = false
 
 [[tool.mypy.overrides]]
 module = [
     "docker.*",
-    "github.*",
-    "redis.*",
-    "sqlalchemy.*",
-    "alembic.*",
+    "pygithub.*",
+    "structlog.*",
+    "rich.*",
+    "typer.*",
+    "click.*",
+    "prometheus_fastapi_instrumentator.*",
 ]
 ignore_missing_imports = true
 
 # Pytest configuration
 [tool.pytest.ini_options]
-minversion = "6.0"
+minversion = "7.0"
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=openpypi",
+    "--cov=src/openpypi",
     "--cov-report=term-missing",
-    "--cov-report=html",
+    "--cov-report=html:htmlcov",
     "--cov-report=xml",
-    "--cov-fail-under=20",
+    "--cov-fail-under=80",
     "--tb=short",
+    "--maxfail=3",
     "-ra",
+    "--disable-warnings",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
@@ -247,28 +339,31 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
-    "performance: marks tests as performance tests",
+    "api: marks tests as API tests",
+    "cli: marks tests as CLI tests",
     "security: marks tests as security tests",
-    "stress: marks tests as stress tests",
+    "performance: marks tests as performance tests",
 ]
 filterwarnings = [
+    "error",
+    "ignore::UserWarning",
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
 ]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
 
 # Coverage configuration
 [tool.coverage.run]
 source = ["src"]
+branch = true
 omit = [
     "*/tests/*",
+    "*/test_*",
+    "*/__main__.py",
+    "*/conftest.py",
     "*/migrations/*",
-    "*/__pycache__/*",
     "*/venv/*",
-    "*/env/*",
+    "*/.venv/*",
 ]
-parallel = true
 
 [tool.coverage.report]
 exclude_lines = [
@@ -282,44 +377,38 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
+    "except ImportError:",
 ]
+ignore_errors = true
 show_missing = true
 precision = 2
 
 [tool.coverage.html]
 directory = "htmlcov"
 
-# Bandit configuration
+# Bandit security configuration
 [tool.bandit]
-exclude_dirs = ["tests", "migrations"]
-skips = ["B101", "B601"]
+exclude_dirs = ["tests", "migrations", "venv", ".venv"]
+skips = ["B101", "B601"]  # Skip assert_used and shell_injection_possible for tests
 
 # Pylint configuration
-[tool.pylint.master]
+[tool.pylint.main]
 load-plugins = [
-    "pylint.extensions.check_elif",
-    "pylint.extensions.bad_builtin",
     "pylint.extensions.docparams",
-    "pylint.extensions.for_any_all",
-    "pylint.extensions.set_membership",
-    "pylint.extensions.code_style",
-    "pylint.extensions.overlapping_exceptions",
-    "pylint.extensions.typing",
-    "pylint.extensions.redefined_variable_type",
-    "pylint.extensions.comparison_placement",
+    "pylint.extensions.docstyle",
+    "pylint.extensions.mccabe",
 ]
+extension-pkg-whitelist = ["pydantic"]
 
 [tool.pylint.messages_control]
 disable = [
     "missing-module-docstring",
-    "missing-class-docstring",
-    "missing-function-docstring",
+    "missing-function-docstring", 
     "too-few-public-methods",
     "too-many-arguments",
     "too-many-instance-attributes",
     "too-many-locals",
-    "too-many-branches",
-    "too-many-statements",
+    "duplicate-code",
     "fixme",
 ]
 
@@ -329,16 +418,43 @@ max-line-length = 100
 [tool.pylint.design]
 max-args = 10
 max-locals = 20
-max-returns = 6
+max-returns = 8
 max-branches = 15
 max-statements = 60
-max-attributes = 10
+max-parents = 10
+max-attributes = 15
 min-public-methods = 1
 max-public-methods = 25
 
-# Flake8 configuration (in setup.cfg or tox.ini typically, but for reference)
-# [tool.flake8] is not supported, use setup.cfg
+# Flake8 configuration (in setup.cfg for compatibility)
+# See setup.cfg for flake8 configuration
+# Pre-commit configuration is in .pre-commit-config.yaml
 
-# Pre-commit hooks configuration (use .pre-commit-config.yaml file instead)
-# TOML format doesn't support the complex structure needed for pre-commit
-# Create a separate .pre-commit-config.yaml file for pre-commit configuration 
+# Semantic release configuration
+[tool.semantic_release]
+version_toml = ["pyproject.toml:tool.poetry.version"]
+version_variables = [
+    "src/openpypi/_version.py:__version__",
+    "src/openpypi/api/app.py:app.version",
+]
+build_command = "poetry build"
+dist_path = "dist/"
+upload_to_pypi = true
+upload_to_release = true
+remove_dist = false
+commit_subject = "chore(release): v{version}"
+commit_message = "chore(release): v{version}\n\n[skip ci]"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+[tool.semantic_release.remote]
+name = "origin"
+type = "github"
+ignore_token_for_push = false
+
+[tool.semantic_release.publish]
+dist_glob_patterns = ["dist/*"]
+upload_to_vcs_release = true

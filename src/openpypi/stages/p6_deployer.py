@@ -838,7 +838,8 @@ log_info "To run the development server, run: uvicorn {context.package_name}.mai
         """Generate AWS deployment configuration."""
         # Simplified AWS configuration - would need more detailed setup
         return {
-            "buildspec.yml": f"""version: 0.2
+            "buildspec.yml": (
+                f"""version: 0.2
 phases:
   install:
     runtime-versions:
@@ -859,12 +860,14 @@ phases:
       - echo Pushing the Docker image...
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/{context.package_name}:latest
 """
+            )
         }
 
     def _generate_gcp_config(self, context: PackageContext) -> Dict[str, str]:
         """Generate Google Cloud Platform configuration."""
         return {
-            "cloudbuild.yaml": f"""steps:
+            "cloudbuild.yaml": (
+                f"""steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/{context.package_name}', '.']
   - name: 'gcr.io/cloud-builders/docker'
@@ -872,12 +875,14 @@ phases:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['run', 'deploy', '{context.package_name}', '--image', 'gcr.io/$PROJECT_ID/{context.package_name}', '--region', 'us-central1', '--platform', 'managed']
 """
+            )
         }
 
     def _generate_azure_config(self, context: PackageContext) -> Dict[str, str]:
         """Generate Azure deployment configuration."""
         return {
-            "azure-pipelines.yml": f"""trigger:
+            "azure-pipelines.yml": (
+                f"""trigger:
 - main
 
 pool:
@@ -907,6 +912,7 @@ stages:
         tags: |
           $(tag)
 """
+            )
         }
 
     async def _write_deployment_files(

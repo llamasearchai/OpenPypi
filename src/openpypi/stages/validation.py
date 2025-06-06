@@ -103,7 +103,9 @@ class ValidationStage(Stage):
         if not re.match(r"^[a-z][a-z0-9_]*$", package_name):
             return {
                 "valid": False,
-                "message": "Package name must start with lowercase letter and contain only lowercase letters, numbers, and underscores",
+                "message": (
+                    "Package name must start with lowercase letter and contain only lowercase letters, numbers, and underscores"
+                ),
             }
 
         # Reserved keywords check

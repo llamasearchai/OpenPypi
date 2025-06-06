@@ -258,17 +258,27 @@ class ContextManager:
 
         # Try to get values from context first, then from project_config as fallback
         summary = {
-            "project_name": self.context.get("project_name")
-            or (getattr(project_config, "project_name", None) if project_config else None),
-            "package_name": self.context.get("package_name")
-            or (getattr(project_config, "package_name", None) if project_config else None),
-            "version": self.context.get("version")
-            or (getattr(project_config, "version", None) if project_config else None),
+            "project_name": (
+                self.context.get("project_name")
+                or (getattr(project_config, "project_name", None) if project_config else None)
+            ),
+            "package_name": (
+                self.context.get("package_name")
+                or (getattr(project_config, "package_name", None) if project_config else None)
+            ),
+            "version": (
+                self.context.get("version")
+                or (getattr(project_config, "version", None) if project_config else None)
+            ),
             "output_dir": str(self.context.get("output_dir", "")),
-            "author": self.context.get("author")
-            or (getattr(project_config, "author", None) if project_config else None),
-            "email": self.context.get("email")
-            or (getattr(project_config, "email", None) if project_config else None),
+            "author": (
+                self.context.get("author")
+                or (getattr(project_config, "author", None) if project_config else None)
+            ),
+            "email": (
+                self.context.get("email")
+                or (getattr(project_config, "email", None) if project_config else None)
+            ),
         }
 
         if project_config:

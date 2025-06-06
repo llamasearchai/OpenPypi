@@ -244,7 +244,9 @@ class DockerProvider(BaseProvider):
                     "architecture": image.attrs.get("Architecture"),
                     "os": image.attrs.get("Os"),
                     "created": image.attrs.get("Created"),
-                    "warning": "Full vulnerability scan not available - install trivy for comprehensive scanning",
+                    "warning": (
+                        "Full vulnerability scan not available - install trivy for comprehensive scanning"
+                    ),
                 }
             )
 

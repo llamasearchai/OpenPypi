@@ -1,17 +1,18 @@
 """
-Configuration management for OpenPypi.
+Enhanced configuration management for OpenPypi with comprehensive validation and type safety.
 """
 
 import json
 import os
 import re
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import toml
-from pydantic import BaseModel, Field, field_validator, validator
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from ..utils.logger import get_logger
 from .exceptions import ConfigurationError, ValidationError
@@ -19,17 +20,29 @@ from .exceptions import ConfigurationError, ValidationError
 logger = get_logger(__name__)
 
 
+@dataclass
+class TemplateInfo:
+    """Information about available project templates."""
+
+    name: str
+    description: str
+    features: List[str]
+    dependencies: List[str]
+    framework: Optional[str] = None
+    complexity: str = "simple"  # simple, intermediate, advanced
+
+
 class ProjectConfig(BaseModel):
-    """Project configuration model."""
+    """Enhanced project configuration model with comprehensive validation."""
 
     # Core project info
-    project_name: str = Field(..., description="Project name")
+    project_name: str = Field(..., description="Project name", min_length=1, max_length=100)
     package_name: Optional[str] = Field(None, description="Python package name")
-    description: str = Field("A Python package", description="Project description")
-    version: str = Field("0.1.0", description="Initial version")
+    description: str = Field("A Python package", description="Project description", max_length=500)
+    version: str = Field("0.1.0", description="Initial version", pattern=r"^\d+\.\d+\.\d+$")
 
     # Author info
-    author_name: str = Field("Your Name", description="Author name")
+    author_name: str = Field("Your Name", description="Author name", max_length=100)
     author_email: str = Field("nikjois@llamasearch.ai", description="Author email")
 
     # License and metadata
@@ -49,70 +62,220 @@ class ProjectConfig(BaseModel):
         default_factory=list, description="Development dependencies"
     )
 
-    # OpenAI settings
+    # AI and OpenAI settings
     use_ai_generation: bool = Field(False, description="Use AI for code generation")
     ai_provider: str = Field("openai", description="AI provider to use")
+    ai_model: str = Field("gpt-3.5-turbo", description="AI model to use")
 
     # Advanced options
     framework: Optional[str] = Field(None, description="Web framework (fastapi, flask, etc.)")
     database: Optional[str] = Field(None, description="Database type")
+    testing_framework: str = Field("pytest", description="Testing framework")
+
+    # Quality and security settings
+    enable_pre_commit: bool = Field(True, description="Enable pre-commit hooks")
+    enable_security_scanning: bool = Field(True, description="Enable security scanning")
+    enable_dependency_checking: bool = Field(
+        True, description="Enable dependency vulnerability checking"
+    )
 
     @field_validator("project_name")
     @classmethod
-    def validate_project_name(cls, v):
-        """Validate project name format."""
-        if not v:
+    def validate_project_name(cls, v: str) -> str:
+        """Validate project name format with comprehensive checks."""
+        if not v or not v.strip():
             raise ValueError("Project name cannot be empty")
 
-        # Allow letters, numbers, hyphens, underscores
-        if not re.match(r"^[a-zA-Z][a-zA-Z0-9_-]*$", v):
+        v = v.strip()
+
+        # Check length
+        if len(v) < 2:
+            raise ValueError("Project name must be at least 2 characters long")
+
+        if len(v) > 100:
+            raise ValueError("Project name must be less than 100 characters")
+
+        # Allow letters, numbers, hyphens, underscores, dots
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9._-]*$", v):
             raise ValueError(
-                "Project name must start with a letter and contain only letters, numbers, hyphens, and underscores"
+                "Project name must start with a letter and contain only letters, numbers, "
+                "periods, hyphens, and underscores"
             )
+
+        # Check for reserved names
+        reserved_names = {
+            "test",
+            "tests",
+            "src",
+            "lib",
+            "bin",
+            "docs",
+            "doc",
+            "examples",
+            "example",
+            "sample",
+            "demo",
+            "temp",
+            "tmp",
+            "build",
+            "dist",
+            "python",
+            "pip",
+            "setuptools",
+            "wheel",
+            "pypi",
+            "conda",
+        }
+
+        if v.lower() in reserved_names:
+            raise ValueError(f"Project name '{v}' is reserved and cannot be used")
 
         return v
 
     @field_validator("package_name", mode="before")
     @classmethod
-    def set_package_name(cls, v, info):
-        """Set package name based on project name if not provided."""
+    def set_package_name(cls, v: Optional[str], info) -> str:
+        """Set package name based on project name with enhanced validation."""
         if v is not None:
-            return v
+            return cls._validate_package_name(v)
 
         # Get project_name from the context if available
         project_name = ""
-        if info.data and "project_name" in info.data:
+        if hasattr(info, "data") and info.data and "project_name" in info.data:
             project_name = info.data["project_name"]
 
         if not project_name:
             return "my_package"
 
         # Convert project name to valid Python package name
-        # Keep underscores, convert hyphens to underscores, ensure valid Python identifier
-        package_name = project_name.replace("-", "_").lower()
+        package_name = project_name.replace("-", "_").replace(".", "_").replace(" ", "_").lower()
 
         # Ensure it's a valid Python identifier
         if not package_name.isidentifier() or package_name.startswith("_"):
             # If still invalid, prefix with 'pkg_'
             package_name = f"pkg_{package_name.lstrip('_')}"
 
+        return cls._validate_package_name(package_name)
+
+    @classmethod
+    def _validate_package_name(cls, package_name: str) -> str:
+        """Validate Python package name."""
+        if not package_name.isidentifier():
+            raise ValueError(f"Package name '{package_name}' is not a valid Python identifier")
+
+        # Check for Python reserved words
+        import keyword
+
+        if keyword.iskeyword(package_name):
+            raise ValueError(f"Package name '{package_name}' is a Python reserved word")
+
+        # Check for common conflicts
+        standard_library = {
+            "sys",
+            "os",
+            "json",
+            "time",
+            "datetime",
+            "collections",
+            "itertools",
+            "functools",
+            "operator",
+            "math",
+            "random",
+            "string",
+            "re",
+            "urllib",
+            "http",
+            "email",
+            "html",
+            "xml",
+            "sqlite3",
+            "pathlib",
+            "typing",
+        }
+
+        if package_name in standard_library:
+            warnings.warn(
+                f"Package name '{package_name}' conflicts with Python standard library module"
+            )
+
         return package_name
 
     @field_validator("author_email")
     @classmethod
-    def validate_email(cls, v):
-        """Basic email validation."""
-        if "@" not in v or "." not in v.split("@")[-1]:
+    def validate_email(cls, v: str) -> str:
+        """Enhanced email validation."""
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if not re.match(email_pattern, v):
             raise ValueError("Invalid email format")
         return v
 
+    @field_validator("version")
+    @classmethod
+    def validate_version(cls, v: str) -> str:
+        """Validate semantic version format."""
+        version_pattern = r"^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?(?:\+[a-zA-Z0-9.]+)?$"
+        if not re.match(version_pattern, v):
+            raise ValueError("Version must follow semantic versioning (e.g., 1.0.0, 1.0.0-alpha.1)")
+        return v
+
+    @field_validator("license_type")
+    @classmethod
+    def validate_license(cls, v: str) -> str:
+        """Validate license type."""
+        common_licenses = {
+            "MIT",
+            "Apache-2.0",
+            "GPL-3.0",
+            "BSD-3-Clause",
+            "ISC",
+            "GPL-2.0",
+            "LGPL-2.1",
+            "MPL-2.0",
+            "CDDL-1.0",
+            "EPL-2.0",
+        }
+
+        if v not in common_licenses:
+            warnings.warn(f"License '{v}' is not a common open-source license")
+
+        return v
+
+    @field_validator("ai_provider")
+    @classmethod
+    def validate_ai_provider(cls, v: str) -> str:
+        """Validate AI provider."""
+        supported_providers = {"openai", "anthropic", "google", "local"}
+        if v.lower() not in supported_providers:
+            raise ValueError(f"AI provider must be one of: {', '.join(supported_providers)}")
+        return v.lower()
+
+    @model_validator(mode="after")
+    def validate_dependencies(self) -> "ProjectConfig":
+        """Validate dependencies and check for conflicts."""
+        all_deps = self.dependencies + self.dev_dependencies
+
+        # Check for duplicate dependencies
+        seen = set()
+        duplicates = set()
+        for dep in all_deps:
+            dep_name = dep.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0]
+            if dep_name in seen:
+                duplicates.add(dep_name)
+            seen.add(dep_name)
+
+        if duplicates:
+            warnings.warn(f"Duplicate dependencies found: {', '.join(duplicates)}")
+
+        return self
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""
-        return self.dict()
+        return self.model_dump()
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ProjectConfig":
-        """Create config from dictionary."""
+        """Create config from dictionary with validation."""
         return cls(**data)
 
     def get_normalized_names(self) -> Dict[str, str]:
@@ -123,41 +286,89 @@ class ProjectConfig(BaseModel):
             "project_slug": self.project_name.lower().replace("_", "-"),
             "class_name": "".join(word.capitalize() for word in self.package_name.split("_")),
             "module_name": self.package_name.lower(),
+            "constant_name": self.package_name.upper().replace("-", "_"),
         }
+
+    def get_template_variables(self) -> Dict[str, Any]:
+        """Get variables for template rendering."""
+        names = self.get_normalized_names()
+        return {
+            **names,
+            **self.to_dict(),
+            "year": __import__("datetime").datetime.now().year,
+            "features": self.get_enabled_features(),
+        }
+
+    def get_enabled_features(self) -> List[str]:
+        """Get list of enabled features."""
+        features = []
+
+        if self.framework:
+            features.append(f"framework_{self.framework}")
+        if self.database:
+            features.append(f"database_{self.database}")
+        if self.use_ai_generation:
+            features.append("ai_generation")
+        if self.include_docker:
+            features.append("docker")
+        if self.include_ci:
+            features.append("ci_cd")
+        if self.enable_pre_commit:
+            features.append("pre_commit")
+        if self.enable_security_scanning:
+            features.append("security_scanning")
+
+        return features
 
 
 def validate_config(config: ProjectConfig) -> Dict[str, Any]:
-    """Validate configuration and return validation results."""
-    results = {"valid": True, "errors": [], "warnings": [], "suggestions": []}
-
-    # Check for common issues
-    names = config.get_normalized_names()
-
-    # Check if package name conflicts with common Python modules
-    common_modules = {"sys", "os", "json", "time", "datetime", "collections", "itertools"}
-    if names["package_name"] in common_modules:
-        results["warnings"].append(
-            f"Package name '{names['package_name']}' conflicts with standard library module"
-        )
-
-    # Check if project name is too short
-    if len(config.project_name) < 3:
-        results["warnings"].append("Project name is very short, consider a more descriptive name")
+    """Comprehensive configuration validation with detailed feedback."""
+    results = {
+        "valid": True,
+        "errors": [],
+        "warnings": [],
+        "suggestions": [],
+        "security_recommendations": [],
+    }
 
     # Check for placeholder values
-    placeholders = ["your name", "your.email@example.com", "a python package"]
-    if any(
-        placeholder in str(getattr(config, field, "")).lower()
-        for field in ["author_name", "author_email", "description"]
-        for placeholder in placeholders
-    ):
-        results["suggestions"].append("Update placeholder values for author and description")
+    placeholders = {
+        "your name": config.author_name.lower(),
+        "your.email@example.com": config.author_email.lower(),
+        "a python package": config.description.lower(),
+    }
+
+    for placeholder, value in placeholders.items():
+        if placeholder in value:
+            results["suggestions"].append(f"Replace placeholder value: {placeholder}")
+
+    # Security recommendations
+    if config.use_ai_generation and not config.enable_security_scanning:
+        results["security_recommendations"].append(
+            "Enable security scanning when using AI generation to check for potential vulnerabilities"
+        )
+
+    # Performance suggestions
+    if config.framework == "fastapi" and "uvicorn" not in config.dependencies:
+        results["suggestions"].append("Consider adding 'uvicorn' for FastAPI applications")
+
+    # Testing recommendations
+    if config.testing_framework == "pytest" and "pytest" not in config.dev_dependencies:
+        results["suggestions"].append("Add 'pytest' to dev_dependencies for testing")
 
     return results
 
 
 class Config(BaseSettings):
-    """Main configuration class for OpenPypi projects."""
+    """Enhanced main configuration class with comprehensive settings management."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="OPENPYPI_",
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # Project metadata
     project_name: str = Field("openpypi", description="Name of the project")
@@ -172,7 +383,7 @@ class Config(BaseSettings):
     # Output configuration
     output_dir: Path = Field(Path.cwd(), description="Output directory")
 
-    # Feature flags
+    # Feature flags with enhanced options
     use_fastapi: bool = Field(False, description="Enable FastAPI integration")
     use_openai: bool = Field(False, description="Enable OpenAI integration")
     use_docker: bool = Field(False, description="Enable Docker support")
@@ -180,129 +391,270 @@ class Config(BaseSettings):
     create_tests: bool = Field(True, description="Generate test files")
     use_git: bool = Field(True, description="Initialize git repository")
     use_database: bool = Field(False, description="Enable database integration")
+    use_async: bool = Field(False, description="Enable async support")
+    use_type_hints: bool = Field(True, description="Use comprehensive type hints")
+
+    # Quality and security
+    enable_linting: bool = Field(True, description="Enable code linting")
+    enable_formatting: bool = Field(True, description="Enable code formatting")
+    enable_pre_commit: bool = Field(True, description="Enable pre-commit hooks")
+    enable_security_scanning: bool = Field(True, description="Enable security scanning")
 
     # Testing configuration
     test_framework: str = Field("pytest", description="Test framework to use")
+    coverage_threshold: float = Field(80.0, description="Minimum test coverage percentage")
+    enable_performance_tests: bool = Field(False, description="Enable performance testing")
 
-    # Dependencies
+    # Dependencies with categories
     dependencies: List[str] = Field(default_factory=list, description="Project dependencies")
     dev_dependencies: List[str] = Field(
         default_factory=list, description="Development dependencies"
     )
+    optional_dependencies: Dict[str, List[str]] = Field(
+        default_factory=dict, description="Optional dependency groups"
+    )
 
     # Cloud and deployment
-    cloud_provider: Optional[str] = Field(None, description="Cloud provider")
+    cloud_provider: Optional[str] = Field(None, description="Cloud provider (aws, gcp, azure)")
     kubernetes_enabled: bool = Field(False, description="Enable Kubernetes support")
+    docker_registry: Optional[str] = Field(None, description="Docker registry URL")
 
     # AI configuration
     openai_api_key: Optional[str] = Field(None, description="OpenAI API key")
+    ai_model: str = Field("gpt-3.5-turbo", description="AI model to use")
+    max_ai_requests: int = Field(100, description="Maximum AI requests per session")
 
     # API configuration
     api_host: str = Field("0.0.0.0", description="API host")
     api_port: int = Field(8000, description="API port")
     api_reload: bool = Field(False, description="Enable API auto-reload")
+    api_workers: int = Field(1, description="Number of API workers")
 
     # Security configuration
     allowed_hosts: List[str] = Field(["*"], description="Allowed hosts")
     cors_origins: List[str] = Field(["*"], description="CORS allowed origins")
+    secret_key: Optional[str] = Field(None, description="Secret key for sessions")
+    jwt_secret: Optional[str] = Field(None, description="JWT secret key")
 
     # App configuration
     app_env: str = Field("development", description="Application environment")
     log_level: str = Field("INFO", description="Logging level")
+    debug: bool = Field(False, description="Enable debug mode")
+
+    # Rate limiting
+    rate_limit_enabled: bool = Field(True, description="Enable rate limiting")
+    rate_limit_requests: int = Field(100, description="Requests per minute limit")
+    rate_limit_window: int = Field(60, description="Rate limit window in seconds")
+
+    # Monitoring and observability
+    enable_metrics: bool = Field(True, description="Enable metrics collection")
+    enable_tracing: bool = Field(False, description="Enable distributed tracing")
+    metrics_port: int = Field(9090, description="Metrics endpoint port")
 
     # Security/testing overrides (for API/tests only)
-    api_keys: List[str] = Field(
-        default_factory=list, description="API keys for test/dev override (not for production use)"
-    )
+    api_keys: List[str] = Field(default_factory=list, description="API keys for test/dev override")
     fake_users_db_override: Optional[dict] = Field(
-        default=None, description="Override user DB for testing (not for production use)"
+        default=None, description="Override user DB for testing"
     )
     allow_overwrite: bool = Field(
-        default=False, description="Allow overwriting existing directories (for testing)"
+        default=False, description="Allow overwriting existing directories"
     )
 
-    class Config:
-        env_prefix = "OPENPYPI_"
-        case_sensitive = False
-
-    @validator("package_name", always=True)
-    def set_package_name(cls, v, values):
+    @field_validator("package_name", mode="before")
+    @classmethod
+    def set_package_name(cls, v, info):
         """Set package name from project name if not provided."""
-        if v is None and "project_name" in values:
-            return values["project_name"].replace("-", "_").lower()
+        if v is None and hasattr(info, "data") and info.data and "project_name" in info.data:
+            return info.data["project_name"].replace("-", "_").lower()
         return v
 
-    @validator("description", always=True)
-    def set_description(cls, v, values):
+    @field_validator("description", mode="before")
+    @classmethod
+    def set_description(cls, v, info):
         """Set description from project name if not provided."""
-        if v is None and "project_name" in values:
-            return f"A Python package for {values['project_name']}"
+        if v is None and hasattr(info, "data") and info.data and "project_name" in info.data:
+            return f"A Python package for {info.data['project_name']}"
         return v
 
-    @validator("output_dir", pre=True)
+    @field_validator("output_dir", mode="before")
+    @classmethod
     def convert_output_dir(cls, v):
         """Convert output_dir to Path object."""
         if isinstance(v, str):
-            return Path(v)
+            return Path(v).expanduser().resolve()
         return v
 
+    @field_validator("test_framework")
+    @classmethod
+    def validate_test_framework(cls, v):
+        """Validate test framework choice."""
+        allowed = {"pytest", "unittest", "nose2"}
+        if v not in allowed:
+            raise ValueError(f"Test framework must be one of: {', '.join(allowed)}")
+        return v
+
+    @field_validator("cloud_provider")
+    @classmethod
+    def validate_cloud_provider(cls, v):
+        """Validate cloud provider choice."""
+        if v is None:
+            return v
+        allowed = {"aws", "gcp", "azure", "digitalocean", "linode"}
+        if v.lower() not in allowed:
+            raise ValueError(f"Cloud provider must be one of: {', '.join(allowed)}")
+        return v.lower()
+
+    @field_validator("app_env")
+    @classmethod
+    def validate_app_env(cls, v):
+        """Validate application environment."""
+        allowed = {"development", "testing", "staging", "production"}
+        if v.lower() not in allowed:
+            raise ValueError(f"App environment must be one of: {', '.join(allowed)}")
+        return v.lower()
+
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, v):
+        """Validate log level."""
+        allowed = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if v.upper() not in allowed:
+            raise ValueError(f"Log level must be one of: {', '.join(allowed)}")
+        return v.upper()
+
     def validate(self) -> None:
-        """Validate the configuration."""
+        """Comprehensive configuration validation."""
         errors = []
+        warnings = []
 
         # Validate project name
         if not self.project_name:
             errors.append("Project name is required")
-        elif not self.project_name.replace("-", "").replace("_", "").isalnum():
+        elif not re.match(r"^[a-zA-Z][a-zA-Z0-9._-]*$", self.project_name):
             errors.append(
-                "Project name must contain only alphanumeric characters, hyphens, and underscores"
+                "Project name must start with a letter and contain only alphanumeric characters, "
+                "periods, hyphens, and underscores"
             )
 
         # Validate package name
         if not self.package_name:
             errors.append("Package name is required")
-        elif not self.package_name.replace("_", "").isalnum():
-            errors.append("Package name must contain only alphanumeric characters and underscores")
+        elif not self.package_name.isidentifier():
+            errors.append("Package name must be a valid Python identifier")
 
         # Validate email format
-        if "@" not in self.email:
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if not re.match(email_pattern, self.email):
             errors.append("Invalid email format")
 
         # Validate version format
-        version_parts = self.version.split(".")
-        if len(version_parts) != 3 or not all(part.isdigit() for part in version_parts):
-            errors.append("Version must be in format X.Y.Z where X, Y, Z are numbers")
+        if not re.match(r"^\d+\.\d+\.\d+", self.version):
+            errors.append("Version must start with semantic versioning format (X.Y.Z)")
 
-        # Validate test framework
-        if self.test_framework not in ["pytest", "unittest"]:
-            errors.append("Test framework must be 'pytest' or 'unittest'")
+        # Validate coverage threshold
+        if not 0 <= self.coverage_threshold <= 100:
+            errors.append("Coverage threshold must be between 0 and 100")
 
-        # Validate cloud provider
-        if self.cloud_provider and self.cloud_provider not in ["aws", "gcp", "azure"]:
-            errors.append("Cloud provider must be 'aws', 'gcp', or 'azure'")
+        # Production environment checks
+        if self.app_env == "production":
+            if not self.secret_key:
+                warnings.append("Secret key should be set in production")
+            if self.debug:
+                warnings.append("Debug mode should be disabled in production")
+            if "*" in self.allowed_hosts:
+                warnings.append("Allowed hosts should be restricted in production")
+
+        # Security warnings
+        if self.use_openai and not self.openai_api_key:
+            warnings.append("OpenAI API key is required when OpenAI integration is enabled")
 
         if errors:
             raise ValidationError(f"Configuration validation failed: {'; '.join(errors)}")
 
+        if warnings:
+            for warning in warnings:
+                logger.warning(f"Configuration warning: {warning}")
+
+    def get_runtime_dependencies(self) -> List[str]:
+        """Get complete list of runtime dependencies based on configuration."""
+        deps = list(self.dependencies)
+
+        # Add framework dependencies
+        if self.use_fastapi:
+            deps.extend(
+                ["fastapi>=0.104.0", "uvicorn[standard]>=0.24.0", "python-multipart>=0.0.6"]
+            )
+
+        # Add AI dependencies
+        if self.use_openai:
+            deps.extend(["openai>=1.3.0", "tiktoken>=0.5.0"])
+
+        # Add database dependencies
+        if self.use_database:
+            deps.extend(["sqlalchemy>=2.0.0", "alembic>=1.12.0"])
+
+        # Add async dependencies
+        if self.use_async:
+            deps.extend(["aiofiles>=23.0.0", "asyncio-mqtt>=0.13.0"])
+
+        return list(set(deps))  # Remove duplicates
+
+    def get_dev_dependencies(self) -> List[str]:
+        """Get complete list of development dependencies."""
+        dev_deps = list(self.dev_dependencies)
+
+        # Testing dependencies
+        if self.test_framework == "pytest":
+            dev_deps.extend(
+                [
+                    "pytest>=7.4.0",
+                    "pytest-cov>=4.1.0",
+                    "pytest-asyncio>=0.21.0" if self.use_async else None,
+                ]
+            )
+
+        # Code quality dependencies
+        if self.enable_formatting:
+            dev_deps.extend(["black>=23.0.0", "isort>=5.12.0"])
+
+        if self.enable_linting:
+            dev_deps.extend(["flake8>=6.0.0", "mypy>=1.7.0", "pylint>=3.0.0"])
+
+        # Security dependencies
+        if self.enable_security_scanning:
+            dev_deps.extend(["bandit>=1.7.5", "safety>=2.3.0"])
+
+        # Pre-commit dependencies
+        if self.enable_pre_commit:
+            dev_deps.append("pre-commit>=3.0.0")
+
+        return [dep for dep in dev_deps if dep is not None]
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
-        return self.dict()
+        return self.model_dump()
 
     def to_file(self, file_path: Union[str, Path]) -> None:
-        """Save configuration to file."""
+        """Save configuration to file with proper serialization."""
         file_path = Path(file_path)
+        data = self.to_dict()
+
+        # Convert Path objects to strings for serialization
+        for key, value in data.items():
+            if isinstance(value, Path):
+                data[key] = str(value)
 
         if file_path.suffix.lower() == ".json":
-            with open(file_path, "w") as f:
-                json.dump(self.to_dict(), f, indent=2, default=str)
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, default=str)
         else:
             # Default to TOML
-            with open(file_path, "w") as f:
-                toml.dump(self.to_dict(), f)
+            with open(file_path, "w", encoding="utf-8") as f:
+                toml.dump(data, f)
 
     @classmethod
     def from_file(cls, file_path: Union[str, Path]) -> "Config":
-        """Load configuration from file."""
+        """Load configuration from file with error handling."""
         file_path = Path(file_path)
 
         if not file_path.exists():
@@ -310,11 +662,11 @@ class Config(BaseSettings):
 
         try:
             if file_path.suffix.lower() == ".json":
-                with open(file_path) as f:
+                with open(file_path, encoding="utf-8") as f:
                     data = json.load(f)
             else:
                 # Default to TOML
-                with open(file_path) as f:
+                with open(file_path, encoding="utf-8") as f:
                     data = toml.load(f)
 
             return cls(**data)
@@ -328,53 +680,111 @@ class Config(BaseSettings):
 
 
 class ConfigManager:
-    """Configuration manager for handling multiple configurations."""
+    """Enhanced configuration manager with template support and validation."""
 
     def __init__(self, config_dir: Optional[Path] = None):
         self.config_dir = config_dir or Path.cwd()
+        self.templates: Dict[str, TemplateInfo] = self._load_templates()
+
+    def _load_templates(self) -> Dict[str, TemplateInfo]:
+        """Load available project templates."""
+        return {
+            "basic": TemplateInfo(
+                name="basic",
+                description="Basic Python package with minimal dependencies",
+                features=["basic_structure", "testing", "documentation"],
+                dependencies=[],
+            ),
+            "fastapi": TemplateInfo(
+                name="fastapi",
+                description="FastAPI web application with async support",
+                features=["fastapi", "async", "api_docs", "testing"],
+                dependencies=["fastapi", "uvicorn"],
+                framework="fastapi",
+                complexity="intermediate",
+            ),
+            "ml": TemplateInfo(
+                name="ml",
+                description="Machine learning project with common ML libraries",
+                features=["ml", "jupyter", "data_analysis", "testing"],
+                dependencies=["numpy", "pandas", "scikit-learn", "matplotlib"],
+                complexity="intermediate",
+            ),
+            "cli": TemplateInfo(
+                name="cli",
+                description="Command-line interface application",
+                features=["cli", "click", "testing", "packaging"],
+                dependencies=["click", "rich"],
+                complexity="simple",
+            ),
+        }
+
+    def get_templates(self) -> Dict[str, TemplateInfo]:
+        """Get available templates."""
+        return self.templates
+
+    def get_template(self, name: str) -> Optional[TemplateInfo]:
+        """Get specific template by name."""
+        return self.templates.get(name)
 
     def load_config(self, name: str = "default") -> Config:
-        """Load a named configuration."""
-        config_file = self.config_dir / f"{name}.toml"
-        if config_file.exists():
-            return Config.from_file(config_file)
-
-        # Try JSON format
-        config_file = self.config_dir / f"{name}.json"
-        if config_file.exists():
-            return Config.from_file(config_file)
+        """Load a named configuration with fallback."""
+        for ext in [".toml", ".json"]:
+            config_file = self.config_dir / f"{name}{ext}"
+            if config_file.exists():
+                return Config.from_file(config_file)
 
         # Return default config
+        logger.info(f"No configuration file found for '{name}', using defaults")
         return Config()
 
     def save_config(self, config: Config, name: str = "default") -> None:
         """Save a named configuration."""
         config_file = self.config_dir / f"{name}.toml"
         config.to_file(config_file)
+        logger.info(f"Configuration saved to {config_file}")
 
     def list_configs(self) -> List[str]:
         """List available configurations."""
-        configs = []
-        for file_path in self.config_dir.glob("*.toml"):
-            configs.append(file_path.stem)
-        for file_path in self.config_dir.glob("*.json"):
-            if file_path.stem not in configs:
-                configs.append(file_path.stem)
+        configs = set()
+        for pattern in ["*.toml", "*.json"]:
+            for file_path in self.config_dir.glob(pattern):
+                configs.add(file_path.stem)
         return sorted(configs)
+
+    def validate_config(self, config: Config) -> Dict[str, Any]:
+        """Validate configuration comprehensively."""
+        try:
+            config.validate()
+            return {"valid": True, "errors": [], "warnings": []}
+        except ValidationError as e:
+            return {"valid": False, "errors": [str(e)], "warnings": []}
 
 
 def load_config(config_path: Optional[Union[str, Path]] = None) -> Config:
-    """Load configuration from file or environment."""
+    """Load configuration from file or environment with fallback."""
     if config_path:
         return Config.from_file(config_path)
 
     # Look for default config files
-    default_files = ["openpypi.toml", "openpypi.json", ".openpypi.toml", ".openpypi.json"]
+    default_files = [
+        "openpypi.toml",
+        "openpypi.json",
+        ".openpypi.toml",
+        ".openpypi.json",
+        "pyproject.toml",
+    ]
+
     for filename in default_files:
         if Path(filename).exists():
-            return Config.from_file(filename)
+            try:
+                return Config.from_file(filename)
+            except Exception as e:
+                logger.warning(f"Failed to load {filename}: {e}")
+                continue
 
     # Return config from environment
+    logger.info("Loading configuration from environment variables")
     return Config.from_env()
 
 

@@ -96,9 +96,11 @@ def generate_security_report(target_image: str = "openpypi:latest") -> Path:
                     "tool": {
                         "driver": {
                             "name": "trivy-image",
-                            "version": subprocess.run(
-                                ["trivy", "--version"], capture_output=True, text=True
-                            ).stdout.split("\n")[0],
+                            "version": (
+                                subprocess.run(
+                                    ["trivy", "--version"], capture_output=True, text=True
+                                ).stdout.split("\n")[0]
+                            ),
                         }
                     },
                     "results": trivy_results.get("Results", []),
@@ -114,9 +116,11 @@ def generate_security_report(target_image: str = "openpypi:latest") -> Path:
                     "tool": {
                         "driver": {
                             "name": "trivy-fs",
-                            "version": subprocess.run(
-                                ["trivy", "--version"], capture_output=True, text=True
-                            ).stdout.split("\n")[0],
+                            "version": (
+                                subprocess.run(
+                                    ["trivy", "--version"], capture_output=True, text=True
+                                ).stdout.split("\n")[0]
+                            ),
                         }
                     },
                     "results": trivy_fs_results.get("Results", []),
