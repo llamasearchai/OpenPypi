@@ -144,21 +144,23 @@ def get_provider_registry() -> ProviderRegistry:
 
 def register_provider(name_or_class, provider_class=None):
     """Register a provider globally. Can be used as decorator or function call."""
-    
+
     # Used as decorator without arguments: @register_provider
-    if provider_class is None and hasattr(name_or_class, '__name__'):
+    if provider_class is None and hasattr(name_or_class, "__name__"):
         provider_class = name_or_class
-        name = provider_class.__name__.lower().replace('provider', '')
+        name = provider_class.__name__.lower().replace("provider", "")
         _registry.register(name, provider_class)
         return provider_class
-    
-    # Used as decorator with arguments: @register_provider("custom_name")  
+
+    # Used as decorator with arguments: @register_provider("custom_name")
     elif provider_class is None and isinstance(name_or_class, str):
+
         def decorator(cls):
             _registry.register(name_or_class, cls)
             return cls
+
         return decorator
-    
+
     # Used as function call: register_provider("name", ProviderClass)
     else:
         _registry.register(name_or_class, provider_class)

@@ -227,7 +227,9 @@ def test_validate_token_success(client: TestClient, mock_config_with_api_keys):
     app.dependency_overrides[get_current_user] = override_get_current_user
 
     try:
-        response = client.get("/api/v1/auth/validate-token", headers={"X-API-Key": "test_api_key_123"})
+        response = client.get(
+            "/api/v1/auth/validate-token", headers={"X-API-Key": "test_api_key_123"}
+        )
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -253,7 +255,9 @@ def test_validate_token_failure(client: TestClient, mock_config_with_api_keys):
     app.dependency_overrides[get_config] = override_get_config
 
     try:
-        response = client.get("/api/v1/auth/validate-token", headers={"X-API-Key": "invalid_api_key"})
+        response = client.get(
+            "/api/v1/auth/validate-token", headers={"X-API-Key": "invalid_api_key"}
+        )
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         data = response.json()

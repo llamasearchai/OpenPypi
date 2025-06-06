@@ -73,7 +73,7 @@ class ProjectConfig(BaseModel):
         return v
 
     @field_validator("package_name", mode="before")
-    @classmethod 
+    @classmethod
     def set_package_name(cls, v, info):
         """Set package name based on project name if not provided."""
         if v is not None:
@@ -83,7 +83,7 @@ class ProjectConfig(BaseModel):
         project_name = ""
         if info.data and "project_name" in info.data:
             project_name = info.data["project_name"]
-        
+
         if not project_name:
             return "my_package"
 
@@ -158,7 +158,7 @@ def validate_config(config: ProjectConfig) -> Dict[str, Any]:
 
 class Config(BaseSettings):
     """Main configuration class for OpenPypi projects."""
-    
+
     # Project metadata
     project_name: str = Field("openpypi", description="Name of the project")
     package_name: Optional[str] = Field(None, description="Python package name")
@@ -168,10 +168,10 @@ class Config(BaseSettings):
     version: str = Field("0.1.0", description="Project version")
     license: str = Field("MIT", description="License type")
     python_requires: str = Field(">=3.8", description="Python version requirement")
-    
+
     # Output configuration
     output_dir: Path = Field(Path.cwd(), description="Output directory")
-    
+
     # Feature flags
     use_fastapi: bool = Field(False, description="Enable FastAPI integration")
     use_openai: bool = Field(False, description="Enable OpenAI integration")
@@ -180,108 +180,118 @@ class Config(BaseSettings):
     create_tests: bool = Field(True, description="Generate test files")
     use_git: bool = Field(True, description="Initialize git repository")
     use_database: bool = Field(False, description="Enable database integration")
-    
+
     # Testing configuration
     test_framework: str = Field("pytest", description="Test framework to use")
-    
+
     # Dependencies
     dependencies: List[str] = Field(default_factory=list, description="Project dependencies")
-    dev_dependencies: List[str] = Field(default_factory=list, description="Development dependencies")
-    
+    dev_dependencies: List[str] = Field(
+        default_factory=list, description="Development dependencies"
+    )
+
     # Cloud and deployment
     cloud_provider: Optional[str] = Field(None, description="Cloud provider")
     kubernetes_enabled: bool = Field(False, description="Enable Kubernetes support")
-    
+
     # AI configuration
     openai_api_key: Optional[str] = Field(None, description="OpenAI API key")
-    
-    # API configuration  
+
+    # API configuration
     api_host: str = Field("0.0.0.0", description="API host")
     api_port: int = Field(8000, description="API port")
     api_reload: bool = Field(False, description="Enable API auto-reload")
-    
+
     # Security configuration
     allowed_hosts: List[str] = Field(["*"], description="Allowed hosts")
     cors_origins: List[str] = Field(["*"], description="CORS allowed origins")
-    
+
     # App configuration
     app_env: str = Field("development", description="Application environment")
     log_level: str = Field("INFO", description="Logging level")
-    
+
     # Security/testing overrides (for API/tests only)
-    api_keys: List[str] = Field(default_factory=list, description="API keys for test/dev override (not for production use)")
-    fake_users_db_override: Optional[dict] = Field(default=None, description="Override user DB for testing (not for production use)")
-    allow_overwrite: bool = Field(default=False, description="Allow overwriting existing directories (for testing)")
-    
+    api_keys: List[str] = Field(
+        default_factory=list, description="API keys for test/dev override (not for production use)"
+    )
+    fake_users_db_override: Optional[dict] = Field(
+        default=None, description="Override user DB for testing (not for production use)"
+    )
+    allow_overwrite: bool = Field(
+        default=False, description="Allow overwriting existing directories (for testing)"
+    )
+
     class Config:
         env_prefix = "OPENPYPI_"
         case_sensitive = False
-        
+
     @validator("package_name", always=True)
     def set_package_name(cls, v, values):
         """Set package name from project name if not provided."""
         if v is None and "project_name" in values:
             return values["project_name"].replace("-", "_").lower()
         return v
-    
+
     @validator("description", always=True)
     def set_description(cls, v, values):
         """Set description from project name if not provided."""
         if v is None and "project_name" in values:
             return f"A Python package for {values['project_name']}"
         return v
-    
+
     @validator("output_dir", pre=True)
     def convert_output_dir(cls, v):
         """Convert output_dir to Path object."""
         if isinstance(v, str):
             return Path(v)
         return v
-    
+
     def validate(self) -> None:
         """Validate the configuration."""
         errors = []
-        
+
         # Validate project name
         if not self.project_name:
             errors.append("Project name is required")
         elif not self.project_name.replace("-", "").replace("_", "").isalnum():
-            errors.append("Project name must contain only alphanumeric characters, hyphens, and underscores")
-        
+            errors.append(
+                "Project name must contain only alphanumeric characters, hyphens, and underscores"
+            )
+
         # Validate package name
         if not self.package_name:
             errors.append("Package name is required")
         elif not self.package_name.replace("_", "").isalnum():
             errors.append("Package name must contain only alphanumeric characters and underscores")
-        
+
         # Validate email format
         if "@" not in self.email:
             errors.append("Invalid email format")
-        
+
         # Validate version format
         version_parts = self.version.split(".")
         if len(version_parts) != 3 or not all(part.isdigit() for part in version_parts):
             errors.append("Version must be in format X.Y.Z where X, Y, Z are numbers")
-        
+
         # Validate test framework
         if self.test_framework not in ["pytest", "unittest"]:
             errors.append("Test framework must be 'pytest' or 'unittest'")
-        
+
         # Validate cloud provider
         if self.cloud_provider and self.cloud_provider not in ["aws", "gcp", "azure"]:
             errors.append("Cloud provider must be 'aws', 'gcp', or 'azure'")
-        
+
         if errors:
             raise ValidationError(f"Configuration validation failed: {'; '.join(errors)}")
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
         return self.dict()
-    
+
     def to_file(self, file_path: Union[str, Path]) -> None:
         """Save configuration to file."""
         file_path = Path(file_path)
-        
+
         if file_path.suffix.lower() == ".json":
             with open(file_path, "w") as f:
                 json.dump(self.to_dict(), f, indent=2, default=str)
@@ -289,15 +299,15 @@ class Config(BaseSettings):
             # Default to TOML
             with open(file_path, "w") as f:
                 toml.dump(self.to_dict(), f)
-    
+
     @classmethod
     def from_file(cls, file_path: Union[str, Path]) -> "Config":
         """Load configuration from file."""
         file_path = Path(file_path)
-        
+
         if not file_path.exists():
             raise ConfigurationError(f"Configuration file not found: {file_path}")
-        
+
         try:
             if file_path.suffix.lower() == ".json":
                 with open(file_path) as f:
@@ -306,11 +316,11 @@ class Config(BaseSettings):
                 # Default to TOML
                 with open(file_path) as f:
                     data = toml.load(f)
-            
+
             return cls(**data)
         except Exception as e:
             raise ConfigurationError(f"Failed to load configuration from {file_path}: {e}")
-    
+
     @classmethod
     def from_env(cls) -> "Config":
         """Load configuration from environment variables."""
@@ -319,29 +329,29 @@ class Config(BaseSettings):
 
 class ConfigManager:
     """Configuration manager for handling multiple configurations."""
-    
+
     def __init__(self, config_dir: Optional[Path] = None):
         self.config_dir = config_dir or Path.cwd()
-    
+
     def load_config(self, name: str = "default") -> Config:
         """Load a named configuration."""
         config_file = self.config_dir / f"{name}.toml"
         if config_file.exists():
             return Config.from_file(config_file)
-        
+
         # Try JSON format
         config_file = self.config_dir / f"{name}.json"
         if config_file.exists():
             return Config.from_file(config_file)
-        
+
         # Return default config
         return Config()
-    
+
     def save_config(self, config: Config, name: str = "default") -> None:
         """Save a named configuration."""
         config_file = self.config_dir / f"{name}.toml"
         config.to_file(config_file)
-    
+
     def list_configs(self) -> List[str]:
         """List available configurations."""
         configs = []
@@ -357,13 +367,13 @@ def load_config(config_path: Optional[Union[str, Path]] = None) -> Config:
     """Load configuration from file or environment."""
     if config_path:
         return Config.from_file(config_path)
-    
+
     # Look for default config files
     default_files = ["openpypi.toml", "openpypi.json", ".openpypi.toml", ".openpypi.json"]
     for filename in default_files:
         if Path(filename).exists():
             return Config.from_file(filename)
-    
+
     # Return config from environment
     return Config.from_env()
 

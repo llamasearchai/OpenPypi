@@ -97,9 +97,7 @@ class PipelineOrchestrator:
 
                     # Update progress - success
                     if self.progress_callback:
-                        self.progress_callback(
-                            stage_index, f"Completed {stage_name}", "Complete"
-                        )
+                        self.progress_callback(stage_index, f"Completed {stage_name}", "Complete")
 
                     logger.info(f"Stage {stage_index} ({stage_name}) completed successfully")
 

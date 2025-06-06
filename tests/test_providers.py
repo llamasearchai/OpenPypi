@@ -49,7 +49,7 @@ class TestProviderRegistry:
             def get_capabilities(self) -> list:
                 return ["test_capability"]
 
-        # Provider should be registered in global registry  
+        # Provider should be registered in global registry
         assert "test" in registry._providers
 
     def test_get_provider(self):

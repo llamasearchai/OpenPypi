@@ -3,16 +3,16 @@ Database module for OpenPypi
 Provides SQLAlchemy models, sessions, and utilities
 """
 
-from .session import engine, get_db, async_session
-from .models import Base, User, Project, Package, ApiKey, AuditLog
+from .models import ApiKey, AuditLog, Base, Package, Project, User
+from .session import async_session, engine, get_db
 
 __all__ = [
     "engine",
-    "get_db", 
+    "get_db",
     "async_session",
     "Base",
     "User",
-    "Project", 
+    "Project",
     "Package",
     "ApiKey",
     "AuditLog",

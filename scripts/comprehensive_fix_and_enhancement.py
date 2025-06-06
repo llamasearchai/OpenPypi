@@ -5,16 +5,17 @@ Addresses all test failures, improves coverage, and prepares for production.
 """
 
 import os
-import sys
-import subprocess
-import tempfile
 import shutil
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 
 class OpenPypiEnhancer:
     """Comprehensive enhancement and fix utility for OpenPypi."""
-    
+
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.src_dir = project_root / "src"
@@ -23,22 +24,22 @@ class OpenPypiEnhancer:
             "fixes_applied": [],
             "tests_fixed": [],
             "coverage_improvements": [],
-            "production_enhancements": []
+            "production_enhancements": [],
         }
-    
+
     def fix_import_issues(self):
         """Fix all import-related issues in the codebase."""
         print("🔧 Fixing import issues...")
-        
+
         # Fix conftest.py imports
         conftest_path = self.tests_dir / "conftest.py"
         if conftest_path.exists():
             content = conftest_path.read_text()
-            
+
             # Add proper imports and fix issues
             fixed_content = content.replace(
-                'from openpypi.utils.mock_data import generate_mock_projects, generate_mock_users',
-                '''try:
+                "from openpypi.utils.mock_data import generate_mock_projects, generate_mock_users",
+                """try:
     from openpypi.utils.mock_data import generate_mock_projects, generate_mock_users
 except ImportError:
     # Fallback mock data generators
@@ -46,36 +47,36 @@ except ImportError:
         return [{"id": i, "username": f"user{i}", "email": f"user{i}@example.com"} for i in range(count)]
     
     def generate_mock_projects(count=5):
-        return [{"id": i, "name": f"project{i}", "description": f"Test project {i}"} for i in range(count)]'''
+        return [{"id": i, "name": f"project{i}", "description": f"Test project {i}"} for i in range(count)]""",
             )
-            
+
             conftest_path.write_text(fixed_content)
             self.results["fixes_applied"].append("Fixed conftest.py imports")
-    
+
     def fix_test_failures(self):
         """Fix specific test failures identified in the logs."""
         print("🔧 Fixing test failures...")
-        
+
         # Fix test_core.py issues
         test_core_path = self.tests_dir / "test_core.py"
         if test_core_path.exists():
             content = test_core_path.read_text()
-            
+
             # Add missing imports and fix assertions
             if "from openpypi.core.exceptions import" not in content:
                 content = content.replace(
-                    'from openpypi.core import Config, ProjectGenerator',
-                    '''from openpypi.core import Config, ProjectGenerator
-from openpypi.core.exceptions import ConfigurationError, GenerationError, ValidationError'''
+                    "from openpypi.core import Config, ProjectGenerator",
+                    """from openpypi.core import Config, ProjectGenerator
+from openpypi.core.exceptions import ConfigurationError, GenerationError, ValidationError""",
                 )
-            
+
             test_core_path.write_text(content)
             self.results["tests_fixed"].append("Fixed test_core.py imports")
-    
+
     def create_missing_modules(self):
         """Create any missing modules that tests are expecting."""
         print("🔧 Creating missing modules...")
-        
+
         # Ensure exceptions module exists
         exceptions_path = self.src_dir / "openpypi" / "core" / "exceptions.py"
         if not exceptions_path.exists():
@@ -108,11 +109,11 @@ class ProviderError(OpenPypiException):
 '''
             exceptions_path.write_text(exceptions_content)
             self.results["fixes_applied"].append("Created exceptions module")
-    
+
     def enhance_test_coverage(self):
         """Add comprehensive tests to boost coverage to 95%+."""
         print("📈 Enhancing test coverage...")
-        
+
         # Create comprehensive API tests
         api_test_path = self.tests_dir / "test_api_comprehensive.py"
         api_test_content = '''"""Comprehensive API tests to boost coverage."""
@@ -198,14 +199,14 @@ class TestAPIEndpoints:
         data = response.json()
         assert isinstance(data, list)
 '''
-        
+
         api_test_path.write_text(api_test_content)
         self.results["coverage_improvements"].append("Added comprehensive API tests")
-    
+
     def create_production_enhancements(self):
         """Create production-ready enhancements."""
         print("🚀 Creating production enhancements...")
-        
+
         # Create monitoring and logging enhancement
         monitoring_path = self.src_dir / "openpypi" / "core" / "monitoring.py"
         monitoring_content = '''"""Production monitoring and logging utilities."""
@@ -278,20 +279,20 @@ def operation_context(operation_name: str):
         logger.log_error(e, {"operation": operation_name, "duration": duration})
         raise
 '''
-        
+
         monitoring_path.write_text(monitoring_content)
         self.results["production_enhancements"].append("Added production monitoring")
-    
+
     def create_ci_cd_config(self):
         """Create CI/CD configuration files."""
         print("🔄 Creating CI/CD configuration...")
-        
+
         # Create GitHub Actions workflow
         github_dir = self.project_root / ".github" / "workflows"
         github_dir.mkdir(parents=True, exist_ok=True)
-        
+
         workflow_path = github_dir / "ci.yml"
-        workflow_content = '''name: CI/CD Pipeline
+        workflow_content = """name: CI/CD Pipeline
 
 on:
   push:
@@ -378,18 +379,18 @@ jobs:
       with:
         name: dist
         path: dist/
-'''
-        
+"""
+
         workflow_path.write_text(workflow_content)
         self.results["production_enhancements"].append("Added GitHub Actions CI/CD")
-    
+
     def fix_dockerfile_issues(self):
         """Enhance Dockerfile for production."""
         print("🐳 Enhancing Docker configuration...")
-        
+
         # Create optimized production Dockerfile
         dockerfile_path = self.project_root / "Dockerfile.production"
-        dockerfile_content = '''# Multi-stage production Dockerfile for OpenPypi
+        dockerfile_content = """# Multi-stage production Dockerfile for OpenPypi
 FROM python:3.11-slim as builder
 
 # Set environment variables
@@ -453,58 +454,55 @@ EXPOSE 8000
 
 # Command to run the application
 CMD ["uvicorn", "openpypi.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
-'''
-        
+"""
+
         dockerfile_path.write_text(dockerfile_content)
         self.results["production_enhancements"].append("Enhanced production Dockerfile")
-    
+
     def run_comprehensive_tests(self):
         """Run all tests and generate coverage report."""
         print("🧪 Running comprehensive test suite...")
-        
+
         try:
             # Run tests with coverage
             cmd = [
-                sys.executable, "-m", "pytest",
+                sys.executable,
+                "-m",
+                "pytest",
                 "tests/",
                 "--cov=src/openpypi",
                 "--cov-report=term-missing",
                 "--cov-report=html",
                 "--tb=short",
-                "-v"
+                "-v",
             ]
-            
-            result = subprocess.run(
-                cmd,
-                cwd=self.project_root,
-                capture_output=True,
-                text=True
-            )
-            
+
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
+
             print("Test Results:")
             print(result.stdout)
             if result.stderr:
                 print("Errors:")
                 print(result.stderr)
-                
+
             return result.returncode == 0
-            
+
         except Exception as e:
             print(f"Error running tests: {e}")
             return False
-    
+
     def generate_summary_report(self):
         """Generate a comprehensive summary report."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🎯 OPENPYPI ENHANCEMENT SUMMARY")
-        print("="*60)
-        
+        print("=" * 60)
+
         for category, items in self.results.items():
             if items:
                 print(f"\n{category.upper().replace('_', ' ')}:")
                 for item in items:
                     print(f"  ✅ {item}")
-        
+
         print(f"\n📁 Project Location: {self.project_root}")
         print("🚀 Ready for production deployment!")
         print("\nNext Steps:")
@@ -512,11 +510,11 @@ CMD ["uvicorn", "openpypi.api.app:app", "--host", "0.0.0.0", "--port", "8000", "
         print("  2. Build package: python -m build")
         print("  3. Deploy with Docker: docker build -f Dockerfile.production -t openpypi:latest .")
         print("  4. Publish to PyPI: twine upload dist/*")
-    
+
     def run_all_enhancements(self):
         """Execute all enhancements in sequence."""
         print("🚀 Starting comprehensive OpenPypi enhancement...")
-        
+
         self.fix_import_issues()
         self.create_missing_modules()
         self.fix_test_failures()
@@ -524,12 +522,12 @@ CMD ["uvicorn", "openpypi.api.app:app", "--host", "0.0.0.0", "--port", "8000", "
         self.create_production_enhancements()
         self.create_ci_cd_config()
         self.fix_dockerfile_issues()
-        
+
         # Run tests to verify everything works
         tests_passed = self.run_comprehensive_tests()
-        
+
         self.generate_summary_report()
-        
+
         return tests_passed
 
 
@@ -537,9 +535,9 @@ def main():
     """Main entry point."""
     project_root = Path(__file__).parent.parent
     enhancer = OpenPypiEnhancer(project_root)
-    
+
     success = enhancer.run_all_enhancements()
-    
+
     if success:
         print("\n✅ All enhancements completed successfully!")
         exit(0)
@@ -549,4 +547,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

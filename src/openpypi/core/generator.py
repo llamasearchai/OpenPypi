@@ -11,12 +11,12 @@ from typing import Any, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, Template
 
+from ..templates import get_template_path
 from ..utils.formatters import ConfigFormatter
 from ..utils.formatters import ProjectGenerator as BaseProjectGenerator
 from ..utils.logger import get_logger
 from .config import Config
 from .exceptions import GenerationError
-from ..templates import get_template_path
 
 logger = get_logger(__name__)
 
@@ -37,16 +37,14 @@ class ProjectGenerator:
             "files_created": [],
             "directories_created": [],
             "commands_run": [],
-            "warnings": []
+            "warnings": [],
         }
 
     def _setup_template_environment(self) -> Environment:
         """Setup Jinja2 template environment."""
         template_path = get_template_path()
         return Environment(
-            loader=FileSystemLoader(template_path),
-            trim_blocks=True,
-            lstrip_blocks=True
+            loader=FileSystemLoader(template_path), trim_blocks=True, lstrip_blocks=True
         )
 
     def generate(self) -> Dict[str, Any]:
@@ -109,52 +107,47 @@ class ProjectGenerator:
     def _create_project_directory(self) -> Path:
         """Create the main project directory."""
         project_dir = self.config.output_dir / self.config.project_name
-        
+
         if project_dir.exists():
             if any(project_dir.iterdir()):
-                if not getattr(self.config, 'allow_overwrite', False):
-                    raise GenerationError(f"Directory '{project_dir}' already exists and is not empty")
+                if not getattr(self.config, "allow_overwrite", False):
+                    raise GenerationError(
+                        f"Directory '{project_dir}' already exists and is not empty"
+                    )
                 else:
                     # Clear existing directory for overwrite
                     import shutil
+
                     shutil.rmtree(project_dir)
-        
+
         project_dir.mkdir(parents=True, exist_ok=True)
         self.results["directories_created"].append(str(project_dir))
-        
+
         return project_dir
 
     def _generate_project_structure(self, project_dir: Path) -> None:
         """Generate the basic project structure."""
-        directories = [
-            "src" / self.config.package_name,
-            "tests",
-            "docs",
-            "scripts",
-            "configs"
-        ]
-        
+        directories = ["src" / self.config.package_name, "tests", "docs", "scripts", "configs"]
+
         # Add optional directories
         if self.config.use_fastapi:
-            directories.extend([
-                "src" / self.config.package_name / "api",
-                "src" / self.config.package_name / "models",
-                "src" / self.config.package_name / "services"
-            ])
-        
+            directories.extend(
+                [
+                    "src" / self.config.package_name / "api",
+                    "src" / self.config.package_name / "models",
+                    "src" / self.config.package_name / "services",
+                ]
+            )
+
         if self.config.create_tests:
-            directories.extend([
-                "tests" / "unit",
-                "tests" / "integration",
-                "tests" / "fixtures"
-            ])
-        
+            directories.extend(["tests" / "unit", "tests" / "integration", "tests" / "fixtures"])
+
         if self.config.use_docker:
             directories.append("docker")
-        
+
         if self.config.kubernetes_enabled:
             directories.append("k8s")
-        
+
         # Create directories
         for directory in directories:
             dir_path = project_dir / directory
@@ -339,28 +332,28 @@ class ProjectGenerator:
         """Install project dependencies."""
         if not self.config.dependencies and not self.config.dev_dependencies:
             return
-        
+
         try:
             # Create virtual environment
             venv_path = project_dir / "venv"
             subprocess.run(
-                [sys.executable, "-m", "venv", str(venv_path)],
-                check=True,
-                capture_output=True
+                [sys.executable, "-m", "venv", str(venv_path)], check=True, capture_output=True
             )
             self.results["commands_run"].append("python -m venv venv")
-            
+
             # Install package in development mode
-            pip_path = venv_path / "bin" / "pip" if os.name != "nt" else venv_path / "Scripts" / "pip.exe"
-            
+            pip_path = (
+                venv_path / "bin" / "pip" if os.name != "nt" else venv_path / "Scripts" / "pip.exe"
+            )
+
             subprocess.run(
                 [str(pip_path), "install", "-e", ".[dev]"],
                 cwd=project_dir,
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
             self.results["commands_run"].append("pip install -e .[dev]")
-            
+
         except subprocess.CalledProcessError as e:
             logger.warning(f"Dependency installation failed: {e}")
             self.results["warnings"].append(f"Dependency installation failed: {e}")
@@ -1223,7 +1216,7 @@ class OpenAIClient:
             validation_result = self.validate_config()
             if not validation_result["valid"]:
                 return {"success": False, "error": "Configuration validation failed"}
-            
+
             structure_results = self._create_project_structure(output_dir)
             return {"success": True, **structure_results}
         except Exception as e:
@@ -1376,7 +1369,7 @@ class OpenAIClient:
             # Temporarily update config to generate directly in output_dir
             original_output_dir = self.config.output_dir
             original_project_name = self.config.project_name
-            
+
             # Set output_dir to parent and project_name to the directory name
             # so that the project is created directly in output_dir
             self.config.output_dir = output_dir.parent

@@ -49,7 +49,7 @@ class GenerationStage(Stage):
 
             # Generate project
             project_path = Path(output_dir) / validated_config.project_name
-            
+
             # Update generator config with the correct output directory
             generator.config.output_dir = Path(output_dir)
             generation_results = generator.generate()
@@ -70,9 +70,7 @@ class GenerationStage(Stage):
                     },
                 )
             else:
-                error_msg = (
-                    f"Project generation failed: {generation_results.get('error', 'No project directory created')}"
-                )
+                error_msg = f"Project generation failed: {generation_results.get('error', 'No project directory created')}"
                 logger.error(error_msg)
                 return StageResult(
                     stage_name=self.name,

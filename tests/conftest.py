@@ -17,10 +17,16 @@ try:
 except ImportError:
     # Fallback mock data generators
     def generate_mock_users(count=3):
-        return [{"id": i, "username": f"user{i}", "email": f"user{i}@example.com"} for i in range(count)]
-    
+        return [
+            {"id": i, "username": f"user{i}", "email": f"user{i}@example.com"} for i in range(count)
+        ]
+
     def generate_mock_projects(count=5):
-        return [{"id": i, "name": f"project{i}", "description": f"Test project {i}"} for i in range(count)]
+        return [
+            {"id": i, "name": f"project{i}", "description": f"Test project {i}"}
+            for i in range(count)
+        ]
+
 
 # Add src directory to Python path
 src_dir = Path(__file__).parent.parent / "src"

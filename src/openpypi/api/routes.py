@@ -3,16 +3,16 @@
 import asyncio
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field, validator
 
 from ..core.config import Config
+from ..core.exceptions import GenerationError, ValidationError
 from ..core.generator import ProjectGenerator
-from ..core.exceptions import ValidationError, GenerationError
 from ..utils.logger import get_logger
-from ..utils.monitoring import get_system_metrics, get_application_metrics
+from ..utils.monitoring import get_application_metrics, get_system_metrics
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -24,18 +24,19 @@ active_websockets: Dict[str, WebSocket] = {}
 
 class ProjectRequest(BaseModel):
     """Project generation request model."""
+
     name: str = Field(..., description="Project name")
     description: Optional[str] = Field(None, description="Project description")
     author: str = Field("Nik Jois", description="Author name")
     email: str = Field("nikjois@llamasearch.ai", description="Author email")
     options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Project options")
-    
+
     @validator("name")
     def validate_name(cls, v):
         if not v or not v.strip():
             raise ValueError("Project name cannot be empty")
         return v.strip()
-    
+
     @validator("email")
     def validate_email(cls, v):
         if "@" not in v:
@@ -45,6 +46,7 @@ class ProjectRequest(BaseModel):
 
 class ProjectResponse(BaseModel):
     """Project generation response model."""
+
     status: str
     project_dir: Optional[str] = None
     files_created: Optional[list] = None
@@ -57,6 +59,7 @@ class ProjectResponse(BaseModel):
 
 class TaskStatusResponse(BaseModel):
     """Task status response model."""
+
     task_id: str
     status: str
     progress: Optional[int] = None
@@ -69,6 +72,7 @@ class TaskStatusResponse(BaseModel):
 
 class ConfigValidationRequest(BaseModel):
     """Configuration validation request."""
+
     project_name: Optional[str] = None
     author: Optional[str] = None
     email: Optional[str] = None
@@ -80,6 +84,7 @@ class ConfigValidationRequest(BaseModel):
 
 class ConfigValidationResponse(BaseModel):
     """Configuration validation response."""
+
     valid: bool
     errors: Optional[list] = None
     warnings: Optional[list] = None
@@ -89,11 +94,7 @@ class ConfigValidationResponse(BaseModel):
 @router.get("/health", tags=["Health"])
 async def health_check():
     """Basic health check."""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "version": "0.3.0"
-    }
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat(), "version": "0.3.0"}
 
 
 @router.get("/live", tags=["Health"])
@@ -115,14 +116,10 @@ async def detailed_health_check():
     checks = {
         "system": {"status": "healthy", "cpu_percent": 0.0, "memory_percent": 0.0},
         "database": {"status": "healthy", "connection_pool": "available"},
-        "cache": {"status": "healthy", "connections": 0}
+        "cache": {"status": "healthy", "connections": 0},
     }
-    
-    return {
-        "status": "healthy",
-        "checks": checks,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+
+    return {"status": "healthy", "checks": checks, "timestamp": datetime.utcnow().isoformat()}
 
 
 # Project generation routes
@@ -136,25 +133,25 @@ async def generate_project_sync(request: ProjectRequest):
             author=request.author,
             email=request.email,
             description=request.description,
-            **request.options
+            **request.options,
         )
-        
+
         # Validate configuration
         config.validate()
-        
+
         # Generate project
         generator = ProjectGenerator(config)
         result = generator.generate()
-        
+
         return ProjectResponse(
             status="success",
             project_dir=result["project_dir"],
             files_created=result["files_created"],
             directories_created=result["directories_created"],
             commands_run=result["commands_run"],
-            warnings=result["warnings"]
+            warnings=result["warnings"],
         )
-        
+
     except ValidationError as e:
         raise HTTPException(status_code=422, detail={"error": str(e), "type": "validation_error"})
     except GenerationError as e:
@@ -170,7 +167,7 @@ async def generate_project_async(request: ProjectRequest, background_tasks: Back
     try:
         # Create task ID
         task_id = str(uuid.uuid4())
-        
+
         # Store task info
         tasks[task_id] = {
             "id": task_id,
@@ -179,18 +176,16 @@ async def generate_project_async(request: ProjectRequest, background_tasks: Back
             "message": "Task created",
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
-            "request": request.dict()
+            "request": request.dict(),
         }
-        
+
         # Start background task
         background_tasks.add_task(generate_project_background, task_id, request)
-        
+
         return ProjectResponse(
-            status="accepted",
-            task_id=task_id,
-            message="Project generation started"
+            status="accepted", task_id=task_id, message="Project generation started"
         )
-        
+
     except Exception as e:
         logger.error(f"Error starting async generation: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail={"error": str(e)})
@@ -201,7 +196,7 @@ async def get_task_status(task_id: str):
     """Get task status."""
     if task_id not in tasks:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     task = tasks[task_id]
     return TaskStatusResponse(**task)
 
@@ -210,65 +205,63 @@ async def generate_project_background(task_id: str, request: ProjectRequest):
     """Background task for project generation."""
     try:
         # Update task status
-        tasks[task_id].update({
-            "status": "running",
-            "progress": 10,
-            "message": "Creating configuration",
-            "updated_at": datetime.utcnow()
-        })
-        
+        tasks[task_id].update(
+            {
+                "status": "running",
+                "progress": 10,
+                "message": "Creating configuration",
+                "updated_at": datetime.utcnow(),
+            }
+        )
+
         # Notify WebSocket clients
         await notify_websocket_clients(task_id, tasks[task_id])
-        
+
         # Create configuration
         config = Config(
             project_name=request.name,
             author=request.author,
             email=request.email,
             description=request.description,
-            **request.options
+            **request.options,
         )
-        
+
         # Update progress
-        tasks[task_id].update({
-            "progress": 30,
-            "message": "Validating configuration",
-            "updated_at": datetime.utcnow()
-        })
+        tasks[task_id].update(
+            {"progress": 30, "message": "Validating configuration", "updated_at": datetime.utcnow()}
+        )
         await notify_websocket_clients(task_id, tasks[task_id])
-        
+
         # Validate configuration
         config.validate()
-        
+
         # Update progress
-        tasks[task_id].update({
-            "progress": 50,
-            "message": "Generating project",
-            "updated_at": datetime.utcnow()
-        })
+        tasks[task_id].update(
+            {"progress": 50, "message": "Generating project", "updated_at": datetime.utcnow()}
+        )
         await notify_websocket_clients(task_id, tasks[task_id])
-        
+
         # Generate project
         generator = ProjectGenerator(config)
         result = generator.generate()
-        
+
         # Task completed
-        tasks[task_id].update({
-            "status": "completed",
-            "progress": 100,
-            "message": "Project generated successfully",
-            "result": result,
-            "updated_at": datetime.utcnow()
-        })
+        tasks[task_id].update(
+            {
+                "status": "completed",
+                "progress": 100,
+                "message": "Project generated successfully",
+                "result": result,
+                "updated_at": datetime.utcnow(),
+            }
+        )
         await notify_websocket_clients(task_id, tasks[task_id])
-        
+
     except Exception as e:
         logger.error(f"Background task error: {e}", exc_info=True)
-        tasks[task_id].update({
-            "status": "failed",
-            "error": str(e),
-            "updated_at": datetime.utcnow()
-        })
+        tasks[task_id].update(
+            {"status": "failed", "error": str(e), "updated_at": datetime.utcnow()}
+        )
         await notify_websocket_clients(task_id, tasks[task_id])
 
 
@@ -289,14 +282,14 @@ async def websocket_generation_status(websocket: WebSocket, task_id: str):
     """WebSocket endpoint for real-time task status updates."""
     await websocket.accept()
     active_websockets[task_id] = websocket
-    
+
     try:
         # Send current status if task exists
         if task_id in tasks:
             await websocket.send_json(tasks[task_id])
         else:
             await websocket.send_json({"error": "Task not found"})
-        
+
         # Keep connection alive
         while True:
             # Wait for client messages (ping/pong)
@@ -306,8 +299,10 @@ async def websocket_generation_status(websocket: WebSocket, task_id: str):
                     await websocket.send_text("pong")
             except asyncio.TimeoutError:
                 # Send keep-alive
-                await websocket.send_json({"type": "keep-alive", "timestamp": datetime.utcnow().isoformat()})
-            
+                await websocket.send_json(
+                    {"type": "keep-alive", "timestamp": datetime.utcnow().isoformat()}
+                )
+
     except WebSocketDisconnect:
         logger.info(f"WebSocket disconnected for task {task_id}")
     except Exception as e:
@@ -323,26 +318,20 @@ async def get_metrics():
     return {
         "application": get_application_metrics(),
         "system": get_system_metrics(),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
 @router.get("/monitoring/metrics/system", tags=["Monitoring"])
 async def get_system_metrics_endpoint():
     """Get system metrics."""
-    return {
-        **get_system_metrics(),
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return {**get_system_metrics(), "timestamp": datetime.utcnow().isoformat()}
 
 
 @router.get("/monitoring/metrics/application", tags=["Monitoring"])
 async def get_application_metrics_endpoint():
     """Get application metrics."""
-    return {
-        **get_application_metrics(),
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return {**get_application_metrics(), "timestamp": datetime.utcnow().isoformat()}
 
 
 # Configuration routes
@@ -359,15 +348,9 @@ async def get_config_info():
             "openai_integration": True,
             "github_actions": True,
             "testing_frameworks": ["pytest", "unittest"],
-            "cloud_providers": ["aws", "gcp", "azure"]
+            "cloud_providers": ["aws", "gcp", "azure"],
         },
-        "supported_templates": [
-            "library",
-            "web_api", 
-            "cli_tool",
-            "data_science",
-            "ml_toolkit"
-        ]
+        "supported_templates": ["library", "web_api", "cli_tool", "data_science", "ml_toolkit"],
     }
 
 
@@ -377,40 +360,31 @@ async def validate_config(request: ConfigValidationRequest):
     try:
         # Create config from request
         config_data = {k: v for k, v in request.dict().items() if v is not None}
-        
+
         if not config_data.get("project_name"):
             config_data["project_name"] = "test-project"
         if not config_data.get("author"):
             config_data["author"] = "Nik Jois"
         if not config_data.get("email"):
             config_data["email"] = "nikjois@llamasearch.ai"
-        
+
         config = Config(**config_data)
         config.validate()
-        
+
         return ConfigValidationResponse(valid=True)
-        
+
     except ValidationError as e:
-        return ConfigValidationResponse(
-            valid=False,
-            errors=[str(e)]
-        )
+        return ConfigValidationResponse(valid=False, errors=[str(e)])
     except Exception as e:
         logger.error(f"Config validation error: {e}")
-        return ConfigValidationResponse(
-            valid=False,
-            errors=[f"Validation error: {str(e)}"]
-        )
+        return ConfigValidationResponse(valid=False, errors=[f"Validation error: {str(e)}"])
 
 
 # Task management routes
 @router.get("/tasks", tags=["Tasks"])
 async def list_tasks():
     """List all tasks."""
-    return {
-        "tasks": list(tasks.values()),
-        "total": len(tasks)
-    }
+    return {"tasks": list(tasks.values()), "total": len(tasks)}
 
 
 @router.delete("/tasks/{task_id}", tags=["Tasks"])
@@ -418,17 +392,17 @@ async def delete_task(task_id: str):
     """Delete a task."""
     if task_id not in tasks:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     # Remove from active websockets
     active_websockets.pop(task_id, None)
-    
+
     # Remove task
     deleted_task = tasks.pop(task_id)
-    
+
     return {
         "message": "Task deleted successfully",
         "task_id": task_id,
-        "status": deleted_task.get("status")
+        "status": deleted_task.get("status"),
     }
 
 
@@ -437,15 +411,11 @@ async def cleanup_completed_tasks():
     """Clean up completed and failed tasks."""
     completed_statuses = ["completed", "failed"]
     tasks_to_remove = [
-        task_id for task_id, task in tasks.items()
-        if task.get("status") in completed_statuses
+        task_id for task_id, task in tasks.items() if task.get("status") in completed_statuses
     ]
-    
+
     for task_id in tasks_to_remove:
         tasks.pop(task_id, None)
         active_websockets.pop(task_id, None)
-    
-    return {
-        "message": f"Cleaned up {len(tasks_to_remove)} tasks",
-        "removed_tasks": tasks_to_remove
-    } 
+
+    return {"message": f"Cleaned up {len(tasks_to_remove)} tasks", "removed_tasks": tasks_to_remove}

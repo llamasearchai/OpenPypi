@@ -80,9 +80,10 @@ async def get_current_user(api_key: str = Depends(get_api_key)):
     """Dependency to get current user based on API key."""
     # In a real app, you might look up the user associated with the API key
     logger.info(f"Authenticated user with API key: {api_key[:5]}...")
-    
+
     # Mock user object for testing/development
     from openpypi.database.models import User, UserRole, UserStatus
+
     mock_user = User()
     mock_user.id = "test-user-id"
     mock_user.username = "authenticated_user"
@@ -90,24 +91,24 @@ async def get_current_user(api_key: str = Depends(get_api_key)):
     mock_user.role = UserRole.USER
     mock_user.status = UserStatus.ACTIVE
     mock_user.is_active = True
-    
+
     return mock_user
 
 
 async def get_current_admin_user(current_user=Depends(get_current_user)):
     """Dependency to ensure current user has admin privileges."""
     from openpypi.database.models import UserRole
-    
+
     # Check if user has admin privileges
-    if hasattr(current_user, 'role') and current_user.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
+    if hasattr(current_user, "role") and current_user.role in [
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+    ]:
         return current_user
-    
+
     # For development/testing, allow access if user object is mock
-    if hasattr(current_user, 'username') and current_user.username == "authenticated_user":
+    if hasattr(current_user, "username") and current_user.username == "authenticated_user":
         current_user.role = UserRole.ADMIN  # Grant admin for development
         return current_user
-    
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Admin privileges required"
-    )
+
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")

@@ -20,127 +20,135 @@ Usage:
 import argparse
 import ast
 import inspect
+import logging
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Any
-import logging
+from typing import Any, Dict, List, Set, Tuple
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class TestGenerator:
     """Generates comprehensive tests for Python modules."""
-    
+
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.src_path = project_root / "src"
         self.tests_path = project_root / "tests"
-    
+
     def analyze_coverage_gaps(self) -> Dict[str, Dict[str, Any]]:
         """Analyze code coverage to identify gaps."""
         logger.info("ANALYZING: Analyzing coverage gaps...")
-        
+
         # Run coverage analysis
         cmd = [
-            sys.executable, '-m', 'pytest',
-            '--cov=src/openpypi',
-            '--cov-report=json:coverage.json',
-            '--cov-report=term-missing',
-            'tests/'
+            sys.executable,
+            "-m",
+            "pytest",
+            "--cov=src/openpypi",
+            "--cov-report=json:coverage.json",
+            "--cov-report=term-missing",
+            "tests/",
         ]
-        
+
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
-            
+
             # Parse coverage report
             coverage_file = self.project_root / "coverage.json"
             if coverage_file.exists():
                 import json
+
                 with open(coverage_file) as f:
                     coverage_data = json.load(f)
-                
+
                 gaps = {}
-                for file_path, file_data in coverage_data.get('files', {}).items():
-                    if 'src/openpypi' in file_path:
-                        missing_lines = file_data.get('missing_lines', [])
-                        covered_lines = file_data.get('executed_lines', [])
+                for file_path, file_data in coverage_data.get("files", {}).items():
+                    if "src/openpypi" in file_path:
+                        missing_lines = file_data.get("missing_lines", [])
+                        covered_lines = file_data.get("executed_lines", [])
                         total_lines = len(missing_lines) + len(covered_lines)
-                        coverage_percent = (len(covered_lines) / total_lines * 100) if total_lines > 0 else 0
-                        
+                        coverage_percent = (
+                            (len(covered_lines) / total_lines * 100) if total_lines > 0 else 0
+                        )
+
                         if coverage_percent < 80:  # Focus on files with less than 80% coverage
                             gaps[file_path] = {
-                                'missing_lines': missing_lines,
-                                'covered_lines': covered_lines,
-                                'coverage_percent': coverage_percent,
-                                'total_lines': total_lines
+                                "missing_lines": missing_lines,
+                                "covered_lines": covered_lines,
+                                "coverage_percent": coverage_percent,
+                                "total_lines": total_lines,
                             }
-                
+
                 return gaps
-        
+
         except Exception as e:
             logger.error(f"Failed to analyze coverage: {e}")
             return {}
-    
+
     def generate_core_tests(self) -> List[str]:
         """Generate tests for core modules."""
         logger.info("TESTING: Generating core module tests...")
-        
+
         test_files = []
-        core_modules = [
-            'config', 'generator', 'openpypi', 'orchestrator', 'context'
-        ]
-        
+        core_modules = ["config", "generator", "openpypi", "orchestrator", "context"]
+
         for module in core_modules:
             test_file = self._generate_core_module_test(module)
             if test_file:
                 test_files.append(test_file)
-        
+
         return test_files
-    
+
     def generate_api_tests(self) -> List[str]:
         """Generate comprehensive API tests."""
         logger.info("🌐 Generating API tests...")
-        
+
         test_files = []
-        
+
         # Generate comprehensive health endpoint tests
         test_files.append(self._generate_comprehensive_health_tests())
-        
+
         # Generate authentication tests
         test_files.append(self._generate_comprehensive_auth_tests())
-        
+
         # Generate generation endpoint tests
         test_files.append(self._generate_comprehensive_generation_tests())
-        
+
         return test_files
-    
+
     def generate_stage_tests(self) -> List[str]:
         """Generate tests for stage modules."""
         logger.info("🏗️ Generating stage tests...")
-        
+
         test_files = []
         stage_modules = [
-            'p1_conceptualizer', 'p2_architect', 'p3_packager', 
-            'p4_validator', 'p5_documentarian', 'p6_deployer', 'p7_refiner'
+            "p1_conceptualizer",
+            "p2_architect",
+            "p3_packager",
+            "p4_validator",
+            "p5_documentarian",
+            "p6_deployer",
+            "p7_refiner",
         ]
-        
+
         for module in stage_modules:
             test_file = self._generate_stage_module_test(module)
             if test_file:
                 test_files.append(test_file)
-        
+
         return test_files
-    
+
     def _generate_core_module_test(self, module_name: str) -> str:
         """Generate comprehensive test for a core module."""
         test_path = self.tests_path / "core" / f"test_{module_name}_comprehensive.py"
         test_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         test_content = f'''"""
 Comprehensive tests for openpypi.core.{module_name} module.
 """
@@ -250,11 +258,11 @@ class Test{module_name.title()}Comprehensive:
 
         test_path.write_text(test_content)
         return str(test_path)
-    
+
     def _generate_comprehensive_health_tests(self) -> str:
         """Generate comprehensive health endpoint tests."""
         test_path = self.tests_path / "api" / "test_health_comprehensive.py"
-        
+
         test_content = '''"""
 Comprehensive tests for health API endpoints.
 """
@@ -335,14 +343,14 @@ class TestHealthEndpointsComprehensive:
         response = client.get("/live")
         assert response.status_code == 200
 '''
-        
+
         test_path.write_text(test_content)
         return str(test_path)
-    
+
     def _generate_comprehensive_auth_tests(self) -> str:
         """Generate comprehensive auth tests."""
         test_path = self.tests_path / "api" / "test_auth_comprehensive.py"
-        
+
         test_content = '''"""
 Comprehensive tests for authentication API endpoints.
 """
@@ -474,14 +482,14 @@ class TestAuthComprehensive:
         except Exception:
             pytest.skip("Token expiration test requires proper JWT configuration")
 '''
-        
+
         test_path.write_text(test_content)
         return str(test_path)
-    
+
     def _generate_comprehensive_generation_tests(self) -> str:
         """Generate comprehensive generation endpoint tests."""
         test_path = self.tests_path / "api" / "test_generation_comprehensive.py"
-        
+
         test_content = '''"""
 Comprehensive tests for project generation API endpoints.
 """
@@ -641,15 +649,15 @@ class TestGenerationComprehensive:
         for response in responses:
             assert response.status_code in [200, 201, 500, 503]
 '''
-        
+
         test_path.write_text(test_content)
         return str(test_path)
-    
+
     def _generate_stage_module_test(self, module_name: str) -> str:
         """Generate comprehensive test for a stage module."""
         test_path = self.tests_path / "stages" / f"test_{module_name}_comprehensive.py"
         test_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         test_content = f'''"""
 Comprehensive tests for openpypi.stages.{module_name} module.
 """
@@ -698,26 +706,26 @@ class Test{module_name.replace("_", "").title()}Comprehensive:
 
         test_path.write_text(test_content)
         return str(test_path)
-    
+
     def enhance_existing_tests(self) -> List[str]:
         """Enhance existing test files with additional test cases."""
         logger.info("ENHANCING: Enhancing existing tests...")
-        
+
         enhanced_files = []
-        
+
         # Find existing test files
         for test_file in self.tests_path.rglob("test_*.py"):
             if "comprehensive" not in test_file.name:
                 self._add_comprehensive_test_cases(test_file)
                 enhanced_files.append(str(test_file))
-        
+
         return enhanced_files
-    
+
     def _add_comprehensive_test_cases(self, test_file: Path) -> None:
         """Add comprehensive test cases to existing test file."""
         try:
             content = test_file.read_text()
-            
+
             # Add additional test methods if not present
             additional_tests = '''
     
@@ -746,16 +754,16 @@ class Test{module_name.replace("_", "").title()}Comprehensive:
         # Test file handles, network connections, etc.
         assert True  # Placeholder for resource cleanup testing
 '''
-            
+
             # Only add if not already present
             if "test_error_boundary_conditions" not in content:
                 # Find the last class and add methods
                 if "class Test" in content:
                     # Insert before the last line of the file
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     lines.insert(-1, additional_tests)
-                    test_file.write_text('\n'.join(lines))
-        
+                    test_file.write_text("\n".join(lines))
+
         except Exception as e:
             logger.warning(f"Could not enhance {test_file}: {e}")
 
@@ -764,61 +772,55 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Enhance test coverage for OpenPypi")
     parser.add_argument(
-        "--target-coverage",
-        type=int,
-        default=80,
-        help="Target coverage percentage"
+        "--target-coverage", type=int, default=80, help="Target coverage percentage"
     )
     parser.add_argument(
-        "--modules",
-        default="core,api,stages",
-        help="Modules to enhance (comma-separated)"
+        "--modules", default="core,api,stages", help="Modules to enhance (comma-separated)"
     )
     parser.add_argument(
-        "--project-root",
-        type=Path,
-        default=Path.cwd(),
-        help="Project root directory"
+        "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
     )
-    
+
     args = parser.parse_args()
-    
+
     generator = TestGenerator(args.project_root)
-    modules = [m.strip() for m in args.modules.split(',')]
-    
+    modules = [m.strip() for m in args.modules.split(",")]
+
     logger.info(f"STARTING: Enhancing test coverage for modules: {modules}")
     logger.info(f"TARGET: Target coverage: {args.target_coverage}%")
-    
+
     all_generated_files = []
-    
+
     # Analyze current coverage gaps
     coverage_gaps = generator.analyze_coverage_gaps()
     logger.info(f"Found {len(coverage_gaps)} files with coverage gaps")
-    
+
     # Generate tests based on requested modules
-    if 'core' in modules:
+    if "core" in modules:
         core_files = generator.generate_core_tests()
         all_generated_files.extend(core_files)
         logger.info(f"Generated {len(core_files)} core test files")
-    
-    if 'api' in modules:
+
+    if "api" in modules:
         api_files = generator.generate_api_tests()
         all_generated_files.extend(api_files)
         logger.info(f"Generated {len(api_files)} API test files")
-    
-    if 'stages' in modules:
+
+    if "stages" in modules:
         stage_files = generator.generate_stage_tests()
         all_generated_files.extend(stage_files)
         logger.info(f"Generated {len(stage_files)} stage test files")
-    
+
     # Enhance existing tests
     enhanced_files = generator.enhance_existing_tests()
     logger.info(f"Enhanced {len(enhanced_files)} existing test files")
-    
+
     logger.info(f"SUCCESS: Test enhancement complete!")
-    logger.info(f"FILES: Generated/enhanced {len(all_generated_files) + len(enhanced_files)} test files")
+    logger.info(
+        f"FILES: Generated/enhanced {len(all_generated_files) + len(enhanced_files)} test files"
+    )
     logger.info("TESTING: Run 'python -m pytest tests/ --cov=src/openpypi' to check coverage")
 
 
 if __name__ == "__main__":
-    main() 
+    main()

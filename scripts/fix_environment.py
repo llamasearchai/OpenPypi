@@ -5,9 +5,9 @@ Fixes .env file formatting and port binding issues
 """
 
 import os
-import sys
-import subprocess
 import socket
+import subprocess
+import sys
 from pathlib import Path
 from typing import Dict, List
 
@@ -17,7 +17,7 @@ def find_available_port(start_port: int = 8001, max_port: int = 8100) -> int:
     for port in range(start_port, max_port):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             try:
-                sock.bind(('localhost', port))
+                sock.bind(("localhost", port))
                 return port
             except OSError:
                 continue
@@ -28,23 +28,15 @@ def kill_processes_on_port(port: int) -> bool:
     """Kill processes running on the specified port."""
     try:
         if sys.platform == "darwin":  # macOS
-            result = subprocess.run(
-                ['lsof', '-ti', f':{port}'], 
-                capture_output=True, 
-                text=True
-            )
+            result = subprocess.run(["lsof", "-ti", f":{port}"], capture_output=True, text=True)
             if result.stdout.strip():
-                pids = result.stdout.strip().split('\n')
+                pids = result.stdout.strip().split("\n")
                 for pid in pids:
-                    subprocess.run(['kill', '-9', pid], check=False)
+                    subprocess.run(["kill", "-9", pid], check=False)
                 print(f"Killed processes on port {port}")
                 return True
         elif sys.platform == "linux":
-            result = subprocess.run(
-                ['fuser', '-k', f'{port}/tcp'], 
-                capture_output=True, 
-                text=True
-            )
+            result = subprocess.run(["fuser", "-k", f"{port}/tcp"], capture_output=True, text=True)
             print(f"Killed processes on port {port}")
             return True
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -130,52 +122,52 @@ DEFAULT_PYTHON_VERSION=3.11
 DEFAULT_PACKAGE_TEMPLATE=fastapi
 ENABLE_AI_SUGGESTIONS=true
 """
-    
+
     # Find available port
     available_port = find_available_port()
     env_content = env_content.format(available_port=available_port)
-    
+
     env_file = project_root / ".env"
     env_example_file = project_root / ".env.example"
-    
+
     # Create .env.example
-    with open(env_example_file, 'w') as f:
+    with open(env_example_file, "w") as f:
         f.write(env_content)
     print(f"Created {env_example_file}")
-    
+
     # Create .env if it doesn't exist or has issues
     if not env_file.exists() or has_env_formatting_issues(env_file):
-        with open(env_file, 'w') as f:
+        with open(env_file, "w") as f:
             f.write(env_content)
         print(f"Created/Fixed {env_file} with port {available_port}")
-    
+
     return available_port
 
 
 def has_env_formatting_issues(env_file: Path) -> bool:
     """Check if .env file has formatting issues."""
     try:
-        with open(env_file, 'r') as f:
+        with open(env_file, "r") as f:
             content = f.read()
-            
+
         # Check for common issues
-        lines = content.split('\n')
+        lines = content.split("\n")
         for line_num, line in enumerate(lines, 1):
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
-                
-            if '=' not in line:
+
+            if "=" not in line:
                 print(f"Line {line_num}: Missing '=' in '{line}'")
                 return True
-                
-            key, value = line.split('=', 1)
-            
+
+            key, value = line.split("=", 1)
+
             # Check for spaces in key
-            if ' ' in key:
+            if " " in key:
                 print(f"Line {line_num}: Key contains spaces: '{key}'")
                 return True
-                
+
         return False
     except Exception as e:
         print(f"Error reading .env file: {e}")
@@ -185,19 +177,19 @@ def has_env_formatting_issues(env_file: Path) -> bool:
 def fix_docker_compose(project_root: Path, port: int) -> None:
     """Fix docker-compose.yml to use the correct port."""
     docker_compose_file = project_root / "docker-compose.yml"
-    
+
     if docker_compose_file.exists():
         try:
-            with open(docker_compose_file, 'r') as f:
+            with open(docker_compose_file, "r") as f:
                 content = f.read()
-            
+
             # Replace port references
-            content = content.replace('8000:8000', f'{port}:8000')
+            content = content.replace("8000:8000", f"{port}:8000")
             content = content.replace('- "8000:', f'- "{port}:')
-            
-            with open(docker_compose_file, 'w') as f:
+
+            with open(docker_compose_file, "w") as f:
                 f.write(content)
-            
+
             print(f"Updated docker-compose.yml to use port {port}")
         except Exception as e:
             print(f"Could not update docker-compose.yml: {e}")
@@ -206,7 +198,7 @@ def fix_docker_compose(project_root: Path, port: int) -> None:
 def create_startup_script(project_root: Path, port: int) -> None:
     """Create a startup script that handles port conflicts."""
     startup_script = project_root / "start_server.py"
-    
+
     script_content = f'''#!/usr/bin/env python3
 """
 OpenPypi Development Server Startup Script
@@ -268,10 +260,10 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-    
-    with open(startup_script, 'w') as f:
+
+    with open(startup_script, "w") as f:
         f.write(script_content)
-    
+
     # Make executable
     os.chmod(startup_script, 0o755)
     print(f"Created startup script: {startup_script}")
@@ -281,25 +273,25 @@ def main():
     """Fix environment configuration issues."""
     print("OpenPypi Environment Fix Script")
     print("=" * 40)
-    
+
     project_root = Path.cwd()
-    
+
     # Kill processes on default port 8000
     print("Checking for processes on port 8000...")
     kill_processes_on_port(8000)
-    
+
     # Create/fix .env file
     print("Creating/fixing environment configuration...")
     available_port = create_env_file(project_root)
-    
+
     # Fix docker-compose
     print("Updating Docker configuration...")
     fix_docker_compose(project_root, available_port)
-    
+
     # Create startup script
     print("Creating startup script...")
     create_startup_script(project_root, available_port)
-    
+
     print("\n" + "=" * 40)
     print("Environment fix completed!")
     print(f"Server configured to use port: {available_port}")
@@ -308,7 +300,7 @@ def main():
     print("2. Or run: uvicorn openpypi.api.app:app --reload --port " + str(available_port))
     print(f"3. Access the application at: http://localhost:{available_port}")
     print(f"4. View API docs at: http://localhost:{available_port}/docs")
-    
+
     # Check if .env needs manual review
     env_file = project_root / ".env"
     if env_file.exists():
@@ -320,4 +312,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

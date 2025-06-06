@@ -38,7 +38,9 @@ class ArchitectStage(BaseStage):
             )
 
             # Parse and validate response
-            architecture_data = await self._parse_architecture_response(response["content"], context)
+            architecture_data = await self._parse_architecture_response(
+                response["content"], context
+            )
 
             if await self.validate_output(architecture_data):
                 # Update context with architecture
@@ -216,7 +218,9 @@ class ArchitectStage(BaseStage):
         7. Follows Python naming conventions and best practices
         """
 
-    async def _parse_architecture_response(self, response_content: str, context: PackageContext) -> Dict[str, Any]:
+    async def _parse_architecture_response(
+        self, response_content: str, context: PackageContext
+    ) -> Dict[str, Any]:
         """Parse the architecture response from the AI."""
         try:
             architecture_data = json.loads(response_content)

@@ -141,7 +141,9 @@ class GitHubProvider(BaseProvider):
                 return True
             # If requests is available, still test the connection (for mocking)
             try:
-                response = requests.get(f"{self.api_url}/rate_limit", headers=self.headers, timeout=10)
+                response = requests.get(
+                    f"{self.api_url}/rate_limit", headers=self.headers, timeout=10
+                )
                 response.raise_for_status()
                 return True
             except Exception:
@@ -364,11 +366,15 @@ class GitHubProvider(BaseProvider):
 
     def generate_ai_code(self, prompt: str) -> str:
         """Generate AI code (not supported by GitHub provider)."""
-        raise NotImplementedError("AI code generation is not available through GitHub provider. Use OpenAI provider instead.")
+        raise NotImplementedError(
+            "AI code generation is not available through GitHub provider. Use OpenAI provider instead."
+        )
 
     def generate_code_completion(self, code: str) -> str:
         """Generate code completion (not supported by GitHub provider)."""
-        raise NotImplementedError("Code completion is not available through GitHub provider. Use OpenAI provider instead.")
+        raise NotImplementedError(
+            "Code completion is not available through GitHub provider. Use OpenAI provider instead."
+        )
 
     async def generate_response(self, *args, **kwargs) -> Dict[str, Any]:
         raise NotImplementedError("GitHub provider doesn't support AI generation")

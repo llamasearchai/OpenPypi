@@ -19,6 +19,7 @@ from typing import List, Optional
 
 try:
     import uvicorn
+
     UVICORN_AVAILABLE = True
 except ImportError:
     UVICORN_AVAILABLE = False
@@ -27,8 +28,8 @@ from .core import Config, ProjectGenerator
 from .core.context import PackageContext
 from .core.exceptions import OpenPypiException
 from .providers import get_provider, list_providers
-from .utils.logger import get_logger, setup_logging
 from .stages.p6_deployer import DeployerStage
+from .utils.logger import get_logger, setup_logging
 
 logger = get_logger(__name__)
 
@@ -131,12 +132,15 @@ Examples:
     publish_parser = subparsers.add_parser("publish", help="Publish package to PyPI")
     publish_parser.add_argument("project_dir", type=Path, help="Path to project directory")
     publish_parser.add_argument("--token", help="PyPI API token (or use PYPI_TOKEN env var)")
-    publish_parser.add_argument("--repository-url", default="https://upload.pypi.org/legacy/",
-                              help="PyPI repository URL")
-    publish_parser.add_argument("--skip-build", action="store_true", 
-                              help="Skip building distributions")
-    publish_parser.add_argument("--test", action="store_true",
-                              help="Upload to test.pypi.org instead")
+    publish_parser.add_argument(
+        "--repository-url", default="https://upload.pypi.org/legacy/", help="PyPI repository URL"
+    )
+    publish_parser.add_argument(
+        "--skip-build", action="store_true", help="Skip building distributions"
+    )
+    publish_parser.add_argument(
+        "--test", action="store_true", help="Upload to test.pypi.org instead"
+    )
 
     return parser
 
@@ -297,6 +301,7 @@ def handle_create_command(args) -> int:
         print(f"Unexpected error: {e}", file=sys.stderr)
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
@@ -491,7 +496,7 @@ def handle_config_command(args) -> int:
 def handle_publish_command(args) -> int:
     """
     Handle the publish command to upload packages to PyPI.
-    
+
     This command:
     1. Builds the package distributions if not already built
     2. Validates the distributions
@@ -500,76 +505,86 @@ def handle_publish_command(args) -> int:
     try:
         import subprocess
         from pathlib import Path
-        
+
         project_dir = args.project_dir.resolve()
-        
+
         # Check if project directory exists
         if not project_dir.exists():
             print(f"Error: Project directory not found: {project_dir}", file=sys.stderr)
             return 1
-            
+
         # Get PyPI token
         pypi_token = args.token or os.getenv("PYPI_TOKEN")
         if not pypi_token:
-            print("Error: PyPI token not provided. Use --token or set PYPI_TOKEN env var", file=sys.stderr)
+            print(
+                "Error: PyPI token not provided. Use --token or set PYPI_TOKEN env var",
+                file=sys.stderr,
+            )
             return 1
-            
+
         # Set repository URL
         if args.test:
             repository_url = "https://test.pypi.org/legacy/"
         else:
             repository_url = args.repository_url
-            
+
         # Build distributions if needed
         dist_dir = project_dir / "dist"
         if not args.skip_build or not dist_dir.exists() or not list(dist_dir.glob("*.tar.gz")):
             print(f"Building distributions in {project_dir}...")
-            
+
             # Clean old distributions
             if dist_dir.exists():
                 import shutil
+
                 shutil.rmtree(dist_dir)
-                
+
             # Build the package
             result = subprocess.run(
                 [sys.executable, "-m", "build", "--outdir", str(dist_dir)],
                 cwd=project_dir,
                 capture_output=True,
-                text=True
+                text=True,
             )
-            
+
             if result.returncode != 0:
                 print(f"Build failed: {result.stderr}", file=sys.stderr)
                 return 1
-                
+
             print("Build successful!")
-            
+
         # Check for distribution files
         dist_files = list(dist_dir.glob("*.tar.gz")) + list(dist_dir.glob("*.whl"))
         if not dist_files:
             print("Error: No distribution files found to upload", file=sys.stderr)
             return 1
-            
+
         print(f"Found {len(dist_files)} distribution files to upload")
-        
+
         # Upload using twine
         print(f"Uploading to {repository_url}...")
-        
+
         # Create the upload command
         upload_cmd = [
-            sys.executable, "-m", "twine", "upload",
-            "--repository-url", repository_url,
-            "--username", "__token__",
-            "--password", pypi_token,
-            "--verbose"
+            sys.executable,
+            "-m",
+            "twine",
+            "upload",
+            "--repository-url",
+            repository_url,
+            "--username",
+            "__token__",
+            "--password",
+            pypi_token,
+            "--verbose",
         ]
-        
+
         # Add all distribution files
         upload_cmd.extend(str(f) for f in dist_files)
-        
+
         # Run upload
         result = subprocess.run(upload_cmd, capture_output=True, text=True)
-        
+
         if result.returncode == 0:
             print("\nPackage published successfully!")
             if args.test:
@@ -580,12 +595,13 @@ def handle_publish_command(args) -> int:
         else:
             print(f"Upload failed: {result.stderr}", file=sys.stderr)
             return 1
-            
+
     except Exception as e:
         logger.error(f"Publish error: {e}")
         print(f"Publish error: {str(e)}", file=sys.stderr)
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
@@ -593,7 +609,7 @@ def handle_publish_command(args) -> int:
 def main(argv: Optional[List[str]] = None) -> int:
     """
     Main CLI entry point.
-    
+
     This function:
     1. Parses command-line arguments
     2. Sets up logging based on verbosity

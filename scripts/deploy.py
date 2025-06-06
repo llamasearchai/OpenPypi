@@ -5,16 +5,17 @@ This script handles the full deployment pipeline from setup to publication.
 """
 
 import os
-import sys
-import subprocess
 import shutil
-from pathlib import Path
+import subprocess
+import sys
 import time
+from pathlib import Path
+
 
 def create_env_template():
     """Create environment template file."""
     print("🔐 Creating environment template...")
-    
+
     env_template = """# OpenPypi Environment Configuration
 # Copy this file to .env and fill in your actual values
 
@@ -53,18 +54,19 @@ GITHUB_WEBHOOK_SECRET=your_webhook_secret_here
 RATE_LIMIT_PER_MINUTE=60
 RATE_LIMIT_BURST=10
 """
-    
+
     env_template_path = Path(".env.template")
     env_template_path.write_text(env_template)
-    
+
     if not Path(".env").exists():
         # Create .env with test values
         test_env = env_template.replace("your_openai_api_key_here", "sk-test-123456789")
         test_env = test_env.replace("your_", "test_")
         Path(".env").write_text(test_env)
         print("SUCCESS: Created .env file with test defaults")
-    
+
     print("SUCCESS: Environment template created")
+
 
 def run_command(cmd: str, check: bool = True) -> bool:
     """Run a command and return success status."""
@@ -80,10 +82,11 @@ def run_command(cmd: str, check: bool = True) -> bool:
             print(f"Error: {e.stderr}")
         return False
 
+
 def install_dependencies():
     """Install all required dependencies."""
     print("\nINSTALLING: Installing dependencies...")
-    
+
     commands = [
         "pip install --upgrade pip",
         "pip install build twine",
@@ -91,17 +94,18 @@ def install_dependencies():
         "pip install -r requirements-dev.txt",
         "pip install -e .",
     ]
-    
+
     for cmd in commands:
         if not run_command(cmd, check=False):
             print(f"WARNING: Failed to run: {cmd}")
-            
+
     print("SUCCESS: Dependencies installation completed")
+
 
 def run_tests():
     """Run the test suite."""
     print("\nTESTING: Running tests...")
-    
+
     # Clean up test artifacts first
     for pattern in [".coverage*", "htmlcov", ".pytest_cache"]:
         for path in Path(".").glob(pattern):
@@ -109,41 +113,43 @@ def run_tests():
                 shutil.rmtree(path)
             elif path.is_file():
                 path.unlink()
-    
+
     # Run tests
     success = run_command("python -m pytest tests/ -v --tb=short --no-cov", check=False)
-    
+
     if success:
         print("SUCCESS: All tests passed!")
     else:
         print("WARNING: Some tests failed, but continuing...")
-    
+
     return success
+
 
 def format_code():
     """Format code using black and isort."""
     print("\nFORMATTING: Formatting code...")
-    
+
     commands = [
         "python -m black src tests --line-length 100",
         "python -m isort src tests --profile black",
     ]
-    
+
     for cmd in commands:
         run_command(cmd, check=False)
-    
+
     print("SUCCESS: Code formatting completed")
+
 
 def build_package():
     """Build the package."""
     print("\nBUILDING: Building package...")
-    
+
     # Clean previous builds
     for pattern in ["build", "dist", "*.egg-info"]:
         for path in Path(".").glob(pattern):
             if path.is_dir():
                 shutil.rmtree(path)
-    
+
     # Build package
     if run_command("python -m build"):
         dist_files = list(Path("dist").glob("*"))
@@ -155,38 +161,39 @@ def build_package():
         print("FAILED: Package build failed")
         return False
 
+
 def main():
     """Main deployment function."""
     print("STARTING: OpenPypi deployment...")
-    
+
     start_time = time.time()
-    
+
     # Step 1: Create environment template
     create_env_template()
-    
+
     # Step 2: Install dependencies
     install_dependencies()
-    
+
     # Step 3: Format code
     format_code()
-    
+
     # Step 4: Run tests
     tests_passed = run_tests()
-    
+
     # Step 5: Build package
     build_success = build_package()
-    
+
     # Summary
     end_time = time.time()
     duration = end_time - start_time
-    
+
     print(f"\nSUMMARY: Deployment Summary (completed in {duration:.1f}s):")
     print(f"  Environment: SUCCESS: Created")
     print(f"  Dependencies: SUCCESS: Installed")
     print(f"  Code formatting: SUCCESS: Applied")
     print(f"  Tests: {'SUCCESS: Passed' if tests_passed else 'WARNING: Issues found'}")
     print(f"  Package build: {'SUCCESS: Success' if build_success else 'FAILED: Failed'}")
-    
+
     if build_success:
         print("\nSUCCESS: Deployment completed successfully!")
         print("\nNEXT STEPS:")
@@ -201,13 +208,15 @@ def main():
         print("   python scripts/publish_to_pypi.py")
         print("6. To run complete setup:")
         print("   python scripts/complete_setup.py")
-        
+
         # Create a simple verification test
         print("\nVERIFYING: Running quick verification...")
         try:
             import sys
-            sys.path.insert(0, 'src')
+
+            sys.path.insert(0, "src")
             import openpypi
+
             print("SUCCESS: Package can be imported successfully!")
         except ImportError as e:
             print(f"WARNING: Package import issue: {e}")
@@ -216,5 +225,6 @@ def main():
         print("Please review the errors above and run again.")
         sys.exit(1)
 
+
 if __name__ == "__main__":
-    main() 
+    main()

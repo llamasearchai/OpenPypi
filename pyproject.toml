@@ -7,7 +7,7 @@ name = "openpypi"
 version = "0.3.0"
 description = "A comprehensive Python package creation, testing, and publishing platform with AI assistance and automated workflows"
 authors = [
-    {name = "Nik Jois", email = "nikjois@llamasearch.ai"},
+    "Nik Jois <nikjois@llamasearch.ai>",
 ]
 license = "MIT"
 readme = "README.md"

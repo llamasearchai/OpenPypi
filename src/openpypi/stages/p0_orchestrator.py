@@ -311,9 +311,7 @@ class OrchestratorStage(Stage):
                     logger.warning(f"Stage {stage.name} raised exception, will retry: {e}")
                     continue
                 else:
-                    logger.error(
-                        f"Stage {stage.name} failed after {self.max_retries} retries: {e}"
-                    )
+                    logger.error(f"Stage {stage.name} failed after {self.max_retries} retries: {e}")
 
         # If we get here, all retries failed
         return StageResult(

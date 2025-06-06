@@ -32,7 +32,9 @@ class TestAuthComprehensive:
 
     def test_token_generation_invalid_credentials(self):
         """Test token generation with invalid credentials."""
-        response = client.post("/api/v1/auth/token", data={"username": "invalid", "password": "invalid"})
+        response = client.post(
+            "/api/v1/auth/token", data={"username": "invalid", "password": "invalid"}
+        )
         assert response.status_code == 401
 
     def test_user_registration_valid_data(self):

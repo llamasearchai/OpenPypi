@@ -2,21 +2,19 @@
 Enhanced provider tests with comprehensive security and performance testing.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import MagicMock, Mock, patch
 
-# Import providers
-from openpypi.providers import registry, GitHubProvider, DockerProvider
-from openpypi.providers.base import BaseProvider
-
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
-from openpypi.providers import ProviderRegistry
+# Import providers
+from openpypi.providers import DockerProvider, GitHubProvider, ProviderRegistry, registry
+from openpypi.providers.base import BaseProvider
 
 
 def test_provider_registration():

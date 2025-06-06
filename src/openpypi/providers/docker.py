@@ -94,7 +94,7 @@ class DockerProvider(BaseProvider):
         """Validate Docker daemon connection."""
         if not self.is_configured:
             return False
-            
+
         # If client is not available (mocked or docker not installed), check configuration
         if not self.client:
             return self.is_configured
@@ -119,7 +119,7 @@ class DockerProvider(BaseProvider):
 
         if TRIVY_AVAILABLE or shutil.which("trivy"):
             capabilities.append("security_scanning")
-        
+
         # Always include security_scan in capabilities for testing
         capabilities.append("security_scan")
 
@@ -458,7 +458,7 @@ class DockerProvider(BaseProvider):
         package_name = config.get("package_name", "app")
         python_version = config.get("python_version", "3.11")
         use_fastapi = config.get("use_fastapi", False)
-        
+
         dockerfile_content = f"""# Multi-stage build for {package_name}
 FROM python:{python_version}-slim as builder
 
@@ -527,12 +527,16 @@ EXPOSE 8000
             dockerfile_content += """
 # Run FastAPI application
 CMD ["uvicorn", "src.{}.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
-""".format(package_name)
+""".format(
+                package_name
+            )
         else:
             dockerfile_content += """
 # Run application
 CMD ["python", "-m", "src.{}"]
-""".format(package_name)
+""".format(
+                package_name
+            )
 
         return dockerfile_content
 
@@ -542,7 +546,7 @@ CMD ["python", "-m", "src.{}"]
         use_database = config.get("use_database", False)
         use_redis = config.get("use_redis", False)
         use_fastapi = config.get("use_fastapi", False)
-        
+
         compose_content = f"""version: '3.8'
 
 services:
@@ -564,7 +568,7 @@ services:
             dependencies.append("      - database")
         if use_redis:
             dependencies.append("      - redis")
-            
+
         if dependencies:
             compose_content += "\n" + "\n".join(dependencies)
         else:
@@ -635,10 +639,14 @@ volumes:"""
 
     # Add missing abstract methods
     async def generate_response(self, *args, **kwargs) -> Dict[str, Any]:
-        raise NotImplementedError("AI generation is not available through Docker provider. Use OpenAI provider instead.")
+        raise NotImplementedError(
+            "AI generation is not available through Docker provider. Use OpenAI provider instead."
+        )
 
     async def generate_code(self, *args, **kwargs) -> str:
-        raise NotImplementedError("Code generation is not available through Docker provider. Use OpenAI provider instead.")
+        raise NotImplementedError(
+            "Code generation is not available through Docker provider. Use OpenAI provider instead."
+        )
 
     async def estimate_cost(self, *args, **kwargs) -> Dict[str, float]:
         return {"estimated_cost": 0.0}

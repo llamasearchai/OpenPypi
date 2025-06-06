@@ -3,47 +3,46 @@ OpenPypi FastAPI Application
 Production-ready API with comprehensive security, monitoring, and error handling
 """
 
+import logging
 import os
 import sys
 import time
-import logging
 from contextlib import asynccontextmanager
-from typing import Dict, Any
+from typing import Any, Dict
 
+import structlog
 import uvicorn
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
-import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from openpypi.api.middleware import (
+    MetricsMiddleware,
+    RateLimitMiddleware,
+    RequestLoggingMiddleware,
+    SecurityHeadersMiddleware,
+    SecurityMiddleware,
+)
+from openpypi.api.routes import (
+    admin_router,
+    auth_router,
+    generation_router,
+    health_router,
+    monitoring_router,
+    openai_router,
+    packages_router,
+    projects_router,
+)
 from openpypi.core.config import get_settings, load_config
 from openpypi.core.exceptions import OpenPypiException
 from openpypi.database.session import engine, get_db
-from openpypi.api.middleware import (
-    SecurityMiddleware,
-    RequestLoggingMiddleware,
-    RateLimitMiddleware,
-    SecurityHeadersMiddleware,
-    MetricsMiddleware,
-)
-from openpypi.api.routes import (
-    auth_router,
-    projects_router,
-    packages_router,
-    health_router,
-    admin_router,
-    generation_router,
-    monitoring_router,
-    openai_router,
-)
 from openpypi.utils.logger import get_logger
-
 
 # Configure structured logging
 structlog.configure(
@@ -56,7 +55,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
@@ -69,7 +68,7 @@ logger = structlog.get_logger(__name__)
 
 class TimingMiddleware(BaseHTTPMiddleware):
     """Middleware to add request timing."""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         response = await call_next(request)
@@ -82,10 +81,10 @@ class TimingMiddleware(BaseHTTPMiddleware):
 async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown events."""
     settings = get_settings()
-    
+
     # Startup
     logger.info("Starting OpenPypi API server", version=app.version)
-    
+
     # Initialize database
     try:
         # Test database connection
@@ -96,15 +95,15 @@ async def lifespan(app: FastAPI):
         logger.error("Database connection failed", error=str(e))
         if settings.app_env == "production":
             raise
-    
+
     # Initialize monitoring
     if settings.app_env == "production":
         instrumentator = Instrumentator()
         instrumentator.instrument(app).expose(app)
         logger.info("Prometheus metrics enabled")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down OpenPypi API server")
     await engine.dispose()
@@ -113,7 +112,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     settings = get_settings()
-    
+
     # Create FastAPI app
     app = FastAPI(
         title="OpenPypi API",
@@ -124,22 +123,19 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
         lifespan=lifespan,
     )
-    
+
     # Security middleware (order matters!)
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=settings.allowed_hosts
-    )
-    
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allow_headers=["*"],
-        expose_headers=["X-Request-ID", "X-Rate-Limit-Remaining"]
+        expose_headers=["X-Request-ID", "X-Rate-Limit-Remaining"],
     )
-    
+
     app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.add_middleware(SecurityMiddleware)
     app.add_middleware(RateLimitMiddleware)
@@ -147,7 +143,7 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(MetricsMiddleware)
     app.add_middleware(TimingMiddleware)
-    
+
     # Include routers
     app.include_router(health_router, prefix="/health", tags=["health"])
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
@@ -157,19 +153,19 @@ def create_app() -> FastAPI:
     app.include_router(generation_router, prefix="/api/v1/generate", tags=["generation"])
     app.include_router(monitoring_router, prefix="/api/v1/monitoring", tags=["monitoring"])
     app.include_router(openai_router, prefix="/api/v1/openai", tags=["openai"])
-    
+
     # Custom OpenAPI schema
     def custom_openapi():
         if app.openapi_schema:
             return app.openapi_schema
-        
+
         openapi_schema = get_openapi(
             title=app.title,
             version=app.version,
             description=app.description,
             routes=app.routes,
         )
-        
+
         # Add security schemes
         openapi_schema["components"]["securitySchemes"] = {
             "BearerAuth": {
@@ -181,20 +177,17 @@ def create_app() -> FastAPI:
                 "type": "apiKey",
                 "in": "header",
                 "name": "X-API-Key",
-            }
+            },
         }
-        
+
         # Add global security
-        openapi_schema["security"] = [
-            {"BearerAuth": []},
-            {"ApiKeyAuth": []}
-        ]
-        
+        openapi_schema["security"] = [{"BearerAuth": []}, {"ApiKeyAuth": []}]
+
         app.openapi_schema = openapi_schema
         return app.openapi_schema
-    
+
     app.openapi = custom_openapi
-    
+
     # Custom docs endpoints
     @app.get("/docs", include_in_schema=False)
     async def custom_swagger_ui_html():
@@ -205,7 +198,7 @@ def create_app() -> FastAPI:
             swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
             swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
         )
-    
+
     @app.get("/redoc", include_in_schema=False)
     async def redoc_html():
         return get_redoc_html(
@@ -213,7 +206,7 @@ def create_app() -> FastAPI:
             title=f"{app.title} - ReDoc",
             redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js",
         )
-    
+
     # Root endpoint
     @app.get("/", include_in_schema=False)
     async def root():
@@ -223,15 +216,15 @@ def create_app() -> FastAPI:
             "description": "AI-powered Python package creation platform",
             "docs": "/docs",
             "redoc": "/redoc",
-            "health": "/health"
+            "health": "/health",
         }
-    
+
     # Direct liveness probe endpoint
     @app.get("/live", response_model=dict, summary="Liveness Probe")
     async def liveness_probe():
         """Direct liveness probe endpoint for Kubernetes."""
         return {"success": True, "message": "alive"}
-    
+
     # Global exception handlers
     @app.exception_handler(OpenPypiException)
     async def openpypi_exception_handler(request: Request, exc: OpenPypiException):
@@ -240,7 +233,7 @@ def create_app() -> FastAPI:
             error=str(exc),
             error_code=exc.error_code,
             path=request.url.path,
-            method=request.method
+            method=request.method,
         )
         return JSONResponse(
             status_code=exc.status_code,
@@ -248,27 +241,20 @@ def create_app() -> FastAPI:
                 "error": exc.error_code,
                 "message": str(exc),
                 "detail": exc.detail,
-                "timestamp": time.time()
-            }
+                "timestamp": time.time(),
+            },
         )
-    
+
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Request, exc: ValueError):
         logger.warning(
-            "Value error occurred",
-            error=str(exc),
-            path=request.url.path,
-            method=request.method
+            "Value error occurred", error=str(exc), path=request.url.path, method=request.method
         )
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content={
-                "error": "validation_error",
-                "message": str(exc),
-                "timestamp": time.time()
-            }
+            content={"error": "validation_error", "message": str(exc), "timestamp": time.time()},
         )
-    
+
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
         logger.error(
@@ -277,25 +263,26 @@ def create_app() -> FastAPI:
             error_type=type(exc).__name__,
             path=request.url.path,
             method=request.method,
-            exc_info=True
+            exc_info=True,
         )
-        
+
         if settings.app_env == "development":
             import traceback
+
             detail = traceback.format_exc()
         else:
             detail = "An unexpected error occurred"
-        
+
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
                 "error": "internal_server_error",
                 "message": "An unexpected error occurred",
                 "detail": detail if settings.app_env == "development" else None,
-                "timestamp": time.time()
-            }
+                "timestamp": time.time(),
+            },
         )
-    
+
     return app
 
 
@@ -306,11 +293,11 @@ app = create_app()
 def main():
     """Main entry point for running the server."""
     settings = get_settings()
-    
+
     # Configure logging
     log_level = settings.log_level.upper()
     logging.basicConfig(level=getattr(logging, log_level))
-    
+
     # Run server
     uvicorn.run(
         "openpypi.api.app:app",

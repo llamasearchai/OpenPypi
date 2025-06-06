@@ -8,10 +8,10 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Request
 from openai import OpenAI
 
+from openpypi._version import __version__
 from openpypi.api.dependencies import get_db, get_openai_client
 from openpypi.api.schemas import APIResponse, HealthStatus
 from openpypi.utils.logger import get_logger
-from openpypi._version import __version__
 
 logger = get_logger(__name__)
 router = APIRouter()

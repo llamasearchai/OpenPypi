@@ -5,10 +5,10 @@ Enhanced middleware for OpenPypi API with production-ready features.
 import json
 import time
 import uuid
-from datetime import datetime, timezone, timedelta
+from collections import defaultdict, deque
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
-from collections import defaultdict, deque
 
 from fastapi import HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -407,18 +407,20 @@ async def rate_limit_middleware(request: Request, call_next):
 # Aliases for backward compatibility
 SecurityHeadersMiddleware = SecurityMiddleware
 LoggingMiddleware = RequestLoggingMiddleware
-ErrorHandlingMiddleware = RequestLoggingMiddleware  # ErrorHandlingMiddleware can use RequestLoggingMiddleware
+ErrorHandlingMiddleware = (
+    RequestLoggingMiddleware  # ErrorHandlingMiddleware can use RequestLoggingMiddleware
+)
 
 
 def get_middleware_metrics() -> Dict[str, Any]:
     """Get middleware metrics."""
     total_requests = sum(request_counts.values())
     avg_response_time = sum(response_times) / len(response_times) if response_times else 0
-    
+
     return {
         "total_requests": total_requests,
         "average_response_time": avg_response_time,
         "request_counts": dict(request_counts),
         "error_counts": dict(error_counts),
-        "active_connections": len(rate_limit_storage)
+        "active_connections": len(rate_limit_storage),
     }
