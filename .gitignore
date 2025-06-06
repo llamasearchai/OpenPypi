@@ -71,6 +71,10 @@ benchmark-results.json
 *.tar.gz.large
 *.zip.large
 
+# Specific large files that exceed GitHub limits
+trivy_0.49.1_Linux-64bit.deb.1
+semgrep-core
+
 # Temporary files
 *.tmp
 *.swp
